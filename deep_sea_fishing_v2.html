@@ -1,0 +1,2572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Sea Fishing</title>
+<style>
+:root{
+  --ink:#0a0e14;--ocean-dark:#050d1a;--ocean-mid:#0a1e3a;--ocean-light:#12305a;
+  --gold:#c8a84b;--gold-bright:#e8cc70;--gold-dim:#7a6020;
+  --teal:#2a8a7a;--teal-bright:#3ab8a0;--teal-dim:#1a5548;
+  --red:#c84040;--red-bright:#e85050;
+  --green:#2a8a3a;--green-bright:#4adf6a;
+  --text:#d0c8b0;--text-bright:#f0e8cc;--text-dim:#7a7060;
+  --panel:rgba(6,14,28,.94);--border:#1e3858;--border-gold:rgba(200,168,75,.35);
+  --serif:'Georgia',serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--ocean-dark);color:var(--text);font-family:var(--serif)}
+
+/* ── OCEAN BG ── */
+#bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:radial-gradient(ellipse at 50% 0%,#0d2040 0%,#050d1a 60%)}
+.bg-star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--dur,3s) ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:0}50%{opacity:var(--op,.8)}}
+.bg-moon{position:absolute;top:28px;right:90px;width:50px;height:50px;background:radial-gradient(circle at 35% 30%,#f8f0c8,#d4b84a);border-radius:50%;box-shadow:0 0 40px rgba(248,240,200,.3),0 0 80px rgba(200,168,75,.1)}
+.bg-wave{position:absolute;bottom:0;left:-60%;width:220%;border-radius:45%;opacity:.18;animation:wave var(--wd,10s) linear infinite}
+@keyframes wave{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.horizon{position:absolute;bottom:0;left:0;right:0;height:35%;background:linear-gradient(to top,rgba(10,30,58,.6) 0%,transparent 100%)}
+
+/* ── SHELL ── */
+#shell{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;max-width:1200px;margin:0 auto}
+
+/* ── TOP BAR ── */
+#topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;padding:8px 12px;background:linear-gradient(90deg,rgba(5,13,26,.98),rgba(10,22,42,.98));border-bottom:1px solid var(--border-gold);flex-shrink:0}
+#topbar h1{font-size:15px;letter-spacing:2px;color:var(--gold);text-shadow:0 0 20px rgba(200,168,75,.4)}
+#topbar h1 span{font-size:10px;color:var(--text-dim);display:block;letter-spacing:5px;font-weight:400;margin-top:1px}
+.top-stats{display:flex;gap:6px;flex-wrap:wrap}
+.ts{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:3px;padding:4px 8px;text-align:center;min-width:50px}
+.ts-l{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)}
+.ts-v{font-size:13px;font-weight:700;color:var(--gold-bright)}
+
+/* ── TABS ── */
+#tabs{display:flex;border-bottom:1px solid var(--border-gold);background:rgba(5,13,26,.9);flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:8px 14px;font-family:var(--serif);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;border-right:1px solid var(--border);flex-shrink:0;text-align:center;white-space:nowrap}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(200,168,75,.06)}
+.tab .tab-icon{font-size:14px;display:block;margin-bottom:2px}
+
+/* ── MAIN AREA ── */
+#main{flex:1;position:relative}
+.screen{display:none}
+.screen.visible{display:flex;flex-direction:column}
+
+/* ══════════ FISHING SCREEN ══════════ */
+#fishing-screen{display:none;gap:0}
+#fishing-screen.visible{display:flex;flex-direction:column}
+.fish-left{width:100%;background:var(--panel);border-bottom:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.fish-mid{display:flex;flex-direction:column}
+.fish-right{width:100%;background:var(--panel);border-top:1px solid var(--border);display:flex;flex-direction:column}
+
+.pane-title{padding:7px 12px;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);background:linear-gradient(90deg,rgba(200,168,75,.08),transparent);border-bottom:1px solid var(--border)}
+.pane-body{padding:10px}
+
+/* skill */
+.lvl-ring{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#0d2040,#162848);border:2px solid var(--gold-dim);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 14px rgba(200,168,75,.2)}
+.lvl-ring .ln{font-size:22px;font-weight:700;color:var(--gold-bright);line-height:1}
+.lvl-ring .ll{font-size:7px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+.lvl-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.xp-aside{flex:1}
+.xp-aside .xa{font-size:12px;color:var(--text-bright);font-weight:600}
+.xp-aside .xb{font-size:10px;color:var(--text-dim)}
+.bar-wrap{height:10px;background:rgba(0,0,0,.5);border:1px solid #1a3050;border-radius:3px;overflow:hidden;margin:7px 0}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s;position:relative;overflow:hidden}
+.bar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);animation:shim 2s linear infinite}
+@keyframes shim{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.bar-xp{background:linear-gradient(90deg,#1a7a28,var(--green-bright))}
+.bar-lbl{font-size:8px;color:var(--text-dim);text-align:center;margin-bottom:10px}
+
+.eq-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px}
+.eq-cell{background:rgba(0,0,0,.35);border:1px solid #192840;border-radius:3px;padding:4px 6px}
+.eq-cell .ecl{font-size:7px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+.eq-cell .ecv{font-size:10px;color:var(--gold);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.gbn{display:block;width:100%;background:linear-gradient(135deg,#0d2040,#091828);border:1px solid var(--gold-dim);color:var(--gold);font-family:var(--serif);font-size:10px;letter-spacing:1px;padding:6px;border-radius:3px;cursor:pointer;text-align:center;margin-bottom:4px;transition:all .15s}
+.gbn:hover:not([disabled]){background:linear-gradient(135deg,#1a3060,#0d2040);border-color:var(--gold);color:var(--gold-bright)}
+.gbn[disabled]{opacity:.3;cursor:not-allowed}
+.gbn.red{border-color:#7a2020;color:#e06060}
+.gbn.red:hover:not([disabled]){background:linear-gradient(135deg,#5a1010,#3a0808);border-color:var(--red);color:var(--red-bright)}
+.gbn.grn{border-color:#2a6a2a;color:#60d060}
+.gbn.grn:hover:not([disabled]){background:linear-gradient(135deg,#1a4a1a,#0d2a0d);border-color:var(--green);color:var(--green-bright)}
+
+/* scene */
+#scene{position:relative;background:linear-gradient(180deg,#04090f 0%,#060e1c 50%,#091528 100%);overflow:hidden;cursor:crosshair;height:260px}
+.scene-water{position:absolute;left:0;right:0;top:35px;bottom:62px;overflow:hidden}
+.scene-rl{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(42,138,122,.3),transparent);opacity:0;animation:rl var(--rld,5s) ease-in-out infinite}
+@keyframes rl{0%{opacity:0;transform:translateY(0)}20%{opacity:1}80%{opacity:.2}100%{opacity:0;transform:translateY(60px)}}
+.dock-floor{position:absolute;bottom:0;left:0;right:0;height:62px;background:repeating-linear-gradient(90deg,#2a1408 0,#2a1408 54px,#1e0e04 54px,#1e0e04 58px);border-top:2px solid #5a3818}
+.dock-post{position:absolute;bottom:60px;width:10px;background:linear-gradient(90deg,#2a1408,#5a3818,#2a1408);border-radius:2px 2px 0 0}
+#lsvg{position:absolute;inset:0;pointer-events:none}
+#find{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);border:1px solid var(--gold-dim);border-radius:3px;padding:3px 10px;font-size:9px;color:var(--gold);letter-spacing:2px;display:none;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+#spots-wrap{position:absolute;inset:0;pointer-events:none}
+.fspot{position:absolute;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;pointer-events:all;animation:bob 2s ease-in-out infinite;transition:filter .15s}
+.fspot::before{content:'';position:absolute;inset:-6px;border-radius:50%;border:1.5px solid rgba(42,138,122,.3);animation:pr 2.5s ease-out infinite}
+@keyframes pr{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.7);opacity:0}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.fspot:hover{filter:brightness(1.5)}
+.fspot.sp-active{border:1.5px solid var(--gold);box-shadow:0 0 16px rgba(200,168,75,.7);animation:bob 2s ease-in-out infinite,glow .9s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:0 0 6px rgba(200,168,75,.4)}to{box-shadow:0 0 20px rgba(200,168,75,.9)}}
+.fspot.sp-frenzy{animation:frnz .45s ease-in-out infinite}
+@keyframes frnz{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-10px) scale(1.12)}}
+.fspot.sp-locked{opacity:.25;cursor:not-allowed;pointer-events:none}
+
+.popup{position:absolute;background:rgba(4,9,20,.92);border:1px solid var(--gold-dim);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--gold-bright);pointer-events:none;animation:popfloat 1.8s ease-out forwards;white-space:nowrap;z-index:20}
+.popup.pxp{color:var(--green-bright);border-color:var(--teal-dim)}
+@keyframes popfloat{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-60px)}}
+
+/* streak */
+#streak-row{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(0,0,0,.45);border-top:1px solid var(--border)}
+.sr-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap}
+.sr-track{flex:1;height:7px;background:rgba(0,0,0,.5);border:1px solid var(--border);border-radius:3px;overflow:hidden}
+.sr-fill{height:100%;background:linear-gradient(90deg,#a04000,#e07820,#f0c820);transition:width .3s;border-radius:3px}
+#sr-cnt{font-size:10px;color:#e07820;font-weight:700;min-width:52px;text-align:right}
+
+/* spot buttons */
+#spot-btns-row{display:flex;gap:4px;flex-wrap:wrap;padding:7px 10px;border-top:1px solid var(--border);background:rgba(0,0,0,.3)}
+.sbtn{flex:1;min-width:68px;background:rgba(0,0,0,.35);border:1px solid #192840;color:var(--text);font-family:var(--serif);font-size:10px;padding:4px 5px;border-radius:3px;cursor:pointer;text-align:center;transition:all .15s}
+.sbtn:hover:not(.sbtn-lock){border-color:var(--gold-dim);color:var(--gold)}
+.sbtn.sbtn-sel{border-color:var(--gold);color:var(--gold-bright);background:rgba(200,168,75,.08)}
+.sbtn.sbtn-lock{opacity:.28;cursor:not-allowed}
+.sbtn .si{font-size:13px;display:block}
+.sbtn .sq{font-size:7px;color:var(--text-dim);display:block}
+
+/* inv */
+.inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:8px}
+.isl{aspect-ratio:1;background:rgba(0,0,0,.35);border:1px solid #192840;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:16px;position:relative;cursor:default;transition:border-color .1s}
+.isl:hover:not(:empty){border-color:var(--gold-dim)}
+.isl .ic{position:absolute;bottom:1px;right:2px;font-size:7px;color:var(--gold-bright);font-weight:700;text-shadow:0 1px 2px #000}
+.gold-bar{background:rgba(0,0,0,.35);border:1px solid var(--gold-dim);border-radius:3px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.gb-l{font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+.gb-v{font-size:13px;color:var(--gold-bright);font-weight:700}
+
+/* log */
+#log-body{padding:6px;overflow-y:auto;max-height:100%}
+.le{font-size:10px;line-height:1.7;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,.03)}
+.le.lhi{color:var(--gold)}.le.llv{color:var(--green-bright);font-weight:700}.le.lct{color:var(--text)}.le.lsl{color:#70c8ff}.le.lq{color:#c08aff}
+
+/* trader */
+.ti{display:flex;align-items:center;gap:5px;padding:5px 6px;border:1px solid #192840;border-radius:3px;margin-bottom:4px;background:rgba(0,0,0,.2);cursor:pointer;transition:all .15s}
+.ti:hover:not(.ti-lock){border-color:var(--gold-dim);background:rgba(200,168,75,.06)}
+.ti-ico{font-size:16px;flex-shrink:0}
+.ti-info{flex:1}
+.ti-n{font-size:10px;color:var(--text)}
+.ti-r{font-size:8px;color:var(--text-dim)}
+.ti-p{font-size:10px;color:var(--gold);font-weight:700;white-space:nowrap}
+.ti-lock{opacity:.32;cursor:not-allowed}
+.ti-poor .ti-p{color:var(--red)}
+.sell-btn{background:linear-gradient(135deg,#0d2a0d,#091808);border:1px solid #2a5a2a;color:#60d060;font-family:var(--serif);font-size:9px;letter-spacing:1px;padding:5px;border-radius:3px;cursor:pointer;width:100%;text-align:center;transition:all .15s}
+.sell-btn:hover{border-color:var(--green-bright);color:var(--green-bright)}
+
+/* ══════════ QUEST SCREEN ══════════ */
+#quest-screen{display:none;flex-direction:column}
+#quest-screen.visible{display:flex}
+.quest-layout{display:flex;flex-direction:column}
+.quest-list{width:100%;background:var(--panel);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:0}
+.quest-main{display:flex;flex-direction:column}
+
+.qitem{padding:8px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);cursor:pointer;transition:all .15s;position:relative;flex:1;min-width:200px}
+.qitem:hover{background:rgba(255,255,255,.03)}
+.qitem.qi-sel{background:rgba(200,168,75,.07);border-left:2px solid var(--gold)}
+.qitem.qi-done{opacity:.55}
+.qitem.qi-locked{opacity:.28;cursor:not-allowed}
+.qitem .qi-name{font-size:11px;color:var(--text-bright)}
+.qitem .qi-sub{font-size:9px;color:var(--text-dim);margin-top:2px}
+.qitem .qi-badge{position:absolute;top:10px;right:10px;font-size:9px;padding:1px 5px;border-radius:10px;font-weight:700}
+.qi-badge.done{background:var(--teal-dim);color:var(--teal-bright)}
+.qi-badge.active{background:rgba(200,168,75,.2);color:var(--gold)}
+.qi-badge.locked{background:rgba(0,0,0,.3);color:var(--text-dim)}
+
+/* dialogue box */
+#dialogue-box{background:linear-gradient(135deg,rgba(4,9,20,.97),rgba(8,18,38,.97));border:1px solid var(--border-gold);border-radius:6px;margin:12px;padding:0;overflow:hidden;flex-shrink:0}
+.dlg-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(200,168,75,.06);border-bottom:1px solid var(--border-gold)}
+.dlg-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1a3060,#0d1e40);border:1.5px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.dlg-npc{font-size:12px;color:var(--gold);font-weight:600}
+.dlg-role{font-size:9px;color:var(--text-dim);letter-spacing:1px}
+.dlg-text{padding:14px 16px;font-size:13px;line-height:1.7;color:var(--text-bright);min-height:70px}
+.dlg-text em{color:var(--gold);font-style:normal}
+.dlg-choices{padding:8px 12px 12px;display:flex;flex-direction:column;gap:5px}
+.dlg-choice{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:4px;padding:8px 12px;cursor:pointer;font-size:11px;color:var(--text);transition:all .15s;text-align:left;font-family:var(--serif)}
+.dlg-choice:hover{border-color:var(--teal);color:var(--teal-bright);background:rgba(42,138,122,.08)}
+.dlg-choice.dc-reward{border-color:var(--gold-dim);color:var(--gold)}
+.dlg-choice.dc-reward:hover{border-color:var(--gold);background:rgba(200,168,75,.1)}
+
+/* quest info */
+.quest-info-panel{flex:1;overflow-y:auto;padding:14px}
+.qi-title{font-size:16px;color:var(--gold);margin-bottom:4px;letter-spacing:1px}
+.qi-giver{font-size:10px;color:var(--text-dim);margin-bottom:10px;letter-spacing:1px;text-transform:uppercase}
+.qi-desc{font-size:12px;line-height:1.8;color:var(--text);margin-bottom:12px}
+.qi-objectives{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:4px;padding:10px 12px;margin-bottom:10px}
+.qi-obj-title{font-size:9px;color:var(--gold-dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.qi-obj{font-size:11px;color:var(--text-dim);padding:3px 0;display:flex;align-items:center;gap:6px}
+.qi-obj.done{color:var(--teal);text-decoration:line-through}
+.qi-obj::before{content:'○';color:var(--text-dim);font-size:8px}
+.qi-obj.done::before{content:'✓';color:var(--teal)}
+.qi-rewards{display:flex;gap:6px;flex-wrap:wrap}
+.qi-rew{background:rgba(200,168,75,.08);border:1px solid var(--gold-dim);border-radius:3px;padding:4px 8px;font-size:10px;color:var(--gold)}
+
+/* ══════════ PORT SCREEN ══════════ */
+#port-screen{display:none}
+#port-screen.visible{display:flex}
+.port-layout{display:flex;flex-direction:column;width:100%}
+.port-left{width:100%;background:var(--panel);border-bottom:1px solid var(--border);display:flex;flex-direction:column}
+.port-mid{display:flex;flex-direction:column}
+.port-right{width:100%;background:var(--panel);border-top:1px solid var(--border);display:flex;flex-direction:column}
+
+/* ship cards */
+.ship-card{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:5px;padding:10px;margin-bottom:8px;cursor:pointer;transition:all .2s;position:relative}
+.ship-card:hover{border-color:var(--teal-dim);background:rgba(42,138,122,.06)}
+.ship-card.sc-sel{border-color:var(--teal);background:rgba(42,138,122,.1)}
+.ship-card.sc-sea{border-color:var(--gold-dim);background:rgba(200,168,75,.05)}
+.ship-card.sc-buy{opacity:.5;border-style:dashed;cursor:default}
+.sc-name{font-size:12px;color:var(--text-bright);font-weight:600}
+.sc-type{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.sc-stats{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.sc-stat{font-size:9px;color:var(--text-dim)}
+.sc-stat span{color:var(--teal-bright)}
+.sc-status{position:absolute;top:8px;right:8px;font-size:8px;padding:2px 6px;border-radius:10px;font-weight:700}
+.sc-status.at-port{background:rgba(42,138,122,.2);color:var(--teal-bright)}
+.sc-status.at-sea{background:rgba(200,168,75,.2);color:var(--gold)}
+.sc-status.returning{background:rgba(192,64,0,.2);color:#e07820}
+
+/* voyage planner */
+.voyage-planner{padding:12px;flex:1;overflow-y:auto}
+.vp-section{margin-bottom:16px}
+.vp-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:4px}
+.route-btn{display:block;width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:4px;padding:8px 12px;cursor:pointer;text-align:left;margin-bottom:5px;transition:all .15s;font-family:var(--serif)}
+.route-btn:hover:not(.rb-lock){border-color:var(--teal-dim)}
+.route-btn.rb-sel{border-color:var(--teal);background:rgba(42,138,122,.08)}
+.route-btn.rb-lock{opacity:.3;cursor:not-allowed}
+.rb-name{font-size:11px;color:var(--text-bright)}
+.rb-info{font-size:9px;color:var(--text-dim);margin-top:2px}
+.rb-info span{color:var(--teal-bright)}
+
+/* crew */
+.crew-slot{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:4px;margin-bottom:4px;background:rgba(0,0,0,.2);cursor:pointer;transition:all .15s}
+.crew-slot:hover{border-color:var(--gold-dim)}
+.crew-slot.cs-sel{border-color:var(--gold);background:rgba(200,168,75,.07)}
+.cs-icon{font-size:20px;flex-shrink:0}
+.cs-info{flex:1}
+.cs-name{font-size:11px;color:var(--text-bright)}
+.cs-role{font-size:9px;color:var(--text-dim)}
+.cs-stats{font-size:9px;color:var(--teal-bright)}
+.cs-cost{font-size:10px;color:var(--gold);font-weight:700}
+
+/* voyage log / active voyages */
+.voyage-card{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:5px;padding:10px;margin-bottom:8px}
+.vc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.vc-ship{font-size:11px;color:var(--text-bright);font-weight:600}
+.vc-eta{font-size:9px;color:var(--gold)}
+.vc-route{font-size:10px;color:var(--text-dim);margin-bottom:6px}
+.vc-progress{height:6px;background:rgba(0,0,0,.5);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.vc-prog-fill{height:100%;background:linear-gradient(90deg,var(--teal-dim),var(--teal-bright));border-radius:3px;transition:width 1s}
+.vc-crew{font-size:9px;color:var(--text-dim)}
+.vc-event{font-size:10px;color:#e07820;margin-top:4px;padding:3px 6px;background:rgba(200,100,0,.1);border-radius:3px;border-left:2px solid #e07820}
+
+/* return cargo */
+.cargo-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--border);border-radius:3px;background:rgba(0,0,0,.2);margin-bottom:4px}
+.ci-ico{font-size:16px}
+.ci-name{flex:1;font-size:11px;color:var(--text)}
+.ci-qty{font-size:10px;color:var(--gold);font-weight:700}
+
+/* ══════════ LEVEL UP OVERLAY ══════════ */
+#lvlup{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center}
+#lvlup.show{display:flex;animation:fi .3s}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.lu-box{background:linear-gradient(135deg,#060e1e,#0d1e38);border:2px solid var(--gold);border-radius:10px;padding:28px 50px;text-align:center;box-shadow:0 0 80px rgba(200,168,75,.5);animation:lubounce .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes lubounce{from{transform:scale(.3)}to{transform:scale(1)}}
+.lu-box h2{font-size:11px;letter-spacing:5px;color:var(--text-dim);margin-bottom:4px;text-transform:uppercase}
+.lu-num{font-size:72px;font-weight:700;color:var(--gold-bright);text-shadow:0 0 40px rgba(232,204,112,.8);line-height:1}
+.lu-msg{font-size:13px;color:var(--text);margin:8px 0 14px}
+.lu-btn{background:var(--gold-dim);border:1px solid var(--gold);color:var(--gold-bright);font-family:var(--serif);font-size:11px;letter-spacing:2px;padding:7px 22px;border-radius:3px;cursor:pointer}
+.lu-btn:hover{background:var(--gold);color:#000}
+
+/* TOOLTIP */
+#tt{position:fixed;z-index:9999;background:rgba(4,9,20,.97);border:1px solid var(--gold-dim);border-radius:4px;padding:7px 11px;font-size:11px;pointer-events:none;color:var(--text);box-shadow:0 4px 20px rgba(0,0,0,.9);display:none;max-width:200px}
+.tt-name{font-size:12px;color:var(--gold);margin-bottom:4px}
+.tt-row{display:flex;justify-content:space-between;gap:14px}
+.tt-l{color:var(--text-dim)}.tt-v{color:var(--text-bright);font-weight:600}
+
+/* NOTIF */
+#notif{position:fixed;top:60px;right:16px;z-index:9998;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.notif-card{background:linear-gradient(135deg,rgba(4,9,20,.98),rgba(8,18,38,.98));border:1px solid var(--gold-dim);border-radius:5px;padding:9px 14px;font-size:11px;color:var(--text-bright);box-shadow:0 4px 16px rgba(0,0,0,.7);animation:notifin .3s ease-out,notifout .4s 3.5s ease-in forwards;min-width:220px}
+.notif-card .nt{font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+@keyframes notifin{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes notifout{to{opacity:0;transform:translateX(30px)}}
+.notif-card.nquest{border-color:#c08aff}
+.notif-card.nquest .nt{color:#c08aff}
+.notif-card.nship{border-color:var(--teal)}
+.notif-card.nship .nt{color:var(--teal-bright)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,.2)}
+::-webkit-scrollbar-thumb{background:#1a3a5a;border-radius:2px}
+
+.log-entry-card{display:flex;align-items:center;gap:8px;padding:7px 8px;border:1px solid var(--border);border-radius:4px;margin-bottom:5px;background:rgba(0,0,0,.25);transition:border-color .15s}
+.log-entry-card:hover{border-color:var(--border-gold)}
+.log-entry-card.unseen{opacity:.3;filter:grayscale(1)}
+.lec-ico{font-size:22px;flex-shrink:0;width:30px;text-align:center}
+.lec-info{flex:1}
+.lec-name{font-size:11px;color:var(--text-bright);font-weight:600}
+.lec-sub{font-size:9px;color:var(--text-dim)}
+.lec-count{font-size:11px;color:var(--gold);font-weight:700;white-space:nowrap}
+.lec-cat{font-size:8px;padding:1px 5px;border-radius:10px;margin-left:4px}
+.cat-common{background:rgba(100,100,100,.2);color:#aaa}
+.cat-uncommon{background:rgba(42,138,122,.2);color:var(--teal-bright)}
+.cat-rare{background:rgba(200,168,75,.2);color:var(--gold)}
+.cat-legendary{background:rgba(200,100,0,.3);color:#f0a030;font-weight:700}
+.stat-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px}
+.stat-row .sk{color:var(--text-dim)}.stat-row .sv{color:var(--text-bright);font-weight:600}
+
+
+/* ══════════════════════════════════
+   DESKTOP OVERRIDES (>=768px) — restore the original side-by-side layouts
+   ══════════════════════════════════ */
+@media(min-width:768px){
+  #fishing-screen.visible{flex-direction:row}
+  .fish-left{width:230px;flex-shrink:0;border-right:1px solid var(--border);border-bottom:none}
+  .fish-mid{flex:1}
+  .fish-right{width:210px;flex-shrink:0;border-left:1px solid var(--border);border-top:none}
+  #scene{height:auto;flex:1;min-height:200px}
+  .pane-body{flex:1;overflow-y:auto}
+  .quest-layout{flex-direction:row}
+  .quest-list{width:240px;border-right:1px solid var(--border);border-bottom:none;flex-direction:column;flex-wrap:nowrap}
+  .qitem{flex:none;min-width:auto}
+  .quest-main{flex:1;overflow:hidden}
+  .port-layout{flex-direction:row}
+  .port-left{width:260px;flex-shrink:0;border-right:1px solid var(--border);border-bottom:none}
+  .port-mid{flex:1}
+  .port-right{width:240px;flex-shrink:0;border-left:1px solid var(--border);border-top:none}
+  #main{overflow:hidden;position:relative}
+  .screen{position:absolute;inset:0;overflow:hidden}
+  .screen.visible{display:flex;flex-direction:row}
+  #fishing-screen.visible{flex-direction:row}
+  #quest-screen.visible{flex-direction:column}
+  #port-screen.visible{flex-direction:row}
+  #collection-screen.visible{flex-direction:column}
+  #shell{height:100vh;overflow:hidden}
+  html,body{height:100%;overflow:hidden}
+  .quest-layout{overflow:hidden;flex:1}
+  .port-layout{width:100%;overflow:hidden}
+}
+
+/* ══════════════════════════════════
+   MOBILE SPECIFIC tweaks
+   ══════════════════════════════════ */
+@media(max-width:767px){
+  .hstats{width:100%}
+  .ts{flex:1}
+  .tab .tab-icon{display:none}
+  .tab{padding:10px 8px;font-size:9px}
+  .sbtn{min-width:60px;font-size:9px}
+  .lvl-ring{width:46px;height:46px}
+  .lvl-ring .ln{font-size:17px}
+  .inv-grid{grid-template-columns:repeat(7,1fr)}
+  .isl{font-size:14px}
+  .dlg-text{font-size:12px;padding:10px 12px;min-height:60px}
+  .dlg-choice{font-size:10px;padding:7px 10px}
+  .ship-card{padding:8px}
+  .voyage-planner{padding:8px}
+  #streak-row{padding:5px 8px}
+  .gbn{font-size:10px;padding:6px}
+  #dialogue-box{margin:8px}
+  .quest-info-panel{padding:10px}
+  .qi-title{font-size:14px}
+  .pane-title{font-size:9px;padding:5px 10px}
+  .lu-box{padding:20px 28px}
+  .lu-num{font-size:52px}
+}
+
+
+/* crafting */
+.recipe-card{padding:8px 10px;border-bottom:1px solid var(--border);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px}
+.recipe-card:hover:not(.rc-locked){background:rgba(255,255,255,.03)}
+.recipe-card.rc-sel{background:rgba(200,168,75,.07);border-left:2px solid var(--gold)}
+.recipe-card.rc-locked{opacity:.3;cursor:not-allowed}
+.rc-ico{font-size:20px;flex-shrink:0}
+.rc-name{font-size:11px;color:var(--text-bright)}
+.rc-cat{font-size:8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px}
+.rc-badge{font-size:8px;padding:1px 5px;border-radius:10px;margin-left:4px}
+.rc-badge.new{background:rgba(200,168,75,.25);color:var(--gold)}
+.rc-badge.quest{background:rgba(160,96,208,.25);color:#c08aff}
+.ingredient-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:4px;margin-bottom:5px;background:rgba(0,0,0,.2)}
+.ing-ico{font-size:18px;flex-shrink:0}
+.ing-name{flex:1;font-size:11px;color:var(--text)}
+.ing-have{font-size:10px;font-weight:700}
+.ing-have.have-enough{color:var(--teal-bright)}
+.ing-have.need-more{color:var(--red)}
+.craft-result{background:rgba(200,168,75,.07);border:1px solid var(--gold-dim);border-radius:5px;padding:12px;margin-top:10px;text-align:center}
+.cr-ico{font-size:32px;margin-bottom:4px}
+.cr-name{font-size:13px;color:var(--gold);font-weight:600}
+.cr-val{font-size:10px;color:var(--text-dim);margin-top:2px}
+.boost-card{background:rgba(42,138,122,.1);border:1px solid var(--teal-dim);border-radius:4px;padding:6px 8px;margin-bottom:5px;font-size:10px}
+.boost-name{color:var(--teal-bright);font-weight:600}
+.boost-time{color:var(--text-dim);font-size:9px}
+.crafted-entry{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
+.ce-ico{font-size:16px}
+.ce-name{flex:1;color:var(--text)}
+.ce-count{color:var(--gold);font-weight:700}
+
+</style>
+</head>
+<body>
+<div id="bg">
+  <div class="bg-moon"></div>
+  <div class="bg-wave" style="background:rgba(10,30,58,.5);--wd:9s;height:32px"></div>
+  <div class="bg-wave" style="background:rgba(6,18,38,.55);--wd:13s;animation-direction:reverse;bottom:4px;height:26px"></div>
+  <div class="horizon"></div>
+</div>
+<div id="notif"></div>
+
+<!-- TOP BAR -->
+<div id="shell">
+<div id="topbar">
+  <h1>&#9875; Deep Sea Fishing <span>THE DOCKS OF SALTMERE</span></h1>
+  <div class="top-stats">
+    <div class="ts"><div class="ts-l">Level</div><div class="ts-v" id="h-lvl">1</div></div>
+    <div class="ts"><div class="ts-l">XP</div><div class="ts-v" id="h-xp">0</div></div>
+    <div class="ts"><div class="ts-l">Gold</div><div class="ts-v" id="h-gld">0</div></div>
+    <div class="ts"><div class="ts-l">Caught</div><div class="ts-v" id="h-ct">0</div></div>
+    <div class="ts"><div class="ts-l">Ships</div><div class="ts-v" id="h-ships">0</div></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div id="tabs">
+  <div class="tab active" data-tab="fishing"><span class="tab-icon">🎣</span>Fishing</div>
+  <div class="tab" data-tab="quest"><span class="tab-icon">📜</span>Quests</div>
+  <div class="tab" data-tab="port"><span class="tab-icon">⚓</span>Port</div>
+  <div class="tab" data-tab="collection"><span class="tab-icon">📖</span>Collection</div>
+  <div class="tab" data-tab="crafting"><span class="tab-icon">⚒️</span>Crafting</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+<!-- ══ FISHING SCREEN ══ -->
+<div class="screen" id="fishing-screen">
+  <!-- LEFT: Skill + Trader -->
+  <div class="fish-left">
+    <div class="pane-title">Fishing Skill</div>
+    <div class="pane-body">
+      <div class="lvl-row">
+        <div class="lvl-ring"><span class="ln" id="lvl-n">1</span><span class="ll">Lvl</span></div>
+        <div class="xp-aside">
+          <div class="xa" id="xp-tot">0 XP</div>
+          <div class="xb" id="xp-nxt">Next: 83 XP</div>
+        </div>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill bar-xp" id="xpbar" style="width:0%"></div></div>
+      <div class="bar-lbl" id="xp-lbl">0 / 83 to next level</div>
+      <div class="eq-row">
+        <div class="eq-cell"><div class="ecl">Rod</div><div class="ecv" id="eq-rod">Small Net</div></div>
+        <div class="eq-cell"><div class="ecl">Bait</div><div class="ecv" id="eq-bait">None</div></div>
+        <div class="eq-cell"><div class="ecl">Outfit</div><div class="ecv" id="eq-out">None</div></div>
+        <div class="eq-cell"><div class="ecl">Bonus</div><div class="ecv" id="eq-bon">+0%</div></div>
+      </div>
+      <button class="gbn red" id="stop-btn" disabled onclick="stopFishing()">Stop Fishing</button>
+    </div>
+    <div class="pane-title">Sea Trader</div>
+    <div class="pane-body" id="trader-body">
+    </div>
+  </div>
+
+  <!-- MID: Scene + controls -->
+  <div class="fish-mid">
+    <div id="scene">
+      <div class="scene-water">
+        <div class="scene-rl" style="top:12%;--rld:4.5s"></div>
+        <div class="scene-rl" style="top:40%;--rld:6.5s;animation-delay:2s"></div>
+        <div class="scene-rl" style="top:70%;--rld:5s;animation-delay:1s"></div>
+      </div>
+      <div class="dock-post" style="left:52px;height:82px"></div>
+      <div class="dock-post" style="left:180px;height:72px"></div>
+      <div class="dock-post" style="right:72px;height:78px"></div>
+      <div class="dock-floor"></div>
+      <svg id="lsvg"></svg>
+      <div id="find">&#9654; FISHING...</div>
+      <div id="spots-wrap"></div>
+    </div>
+    <div id="streak-row">
+      <span class="sr-lbl">Frenzy</span>
+      <div class="sr-track"><div class="sr-fill" id="sr-fill" style="width:0%"></div></div>
+      <span id="sr-cnt">0/200</span>
+    </div>
+    <div id="spot-btns-row"><div style="font-size:10px;color:var(--text-dim);width:100%">Click a glowing spot on the water — or use the buttons below:</div></div>
+    <div id="spot-btns-row2" style="display:flex;gap:4px;flex-wrap:wrap;padding:4px 10px 7px;background:rgba(0,0,0,.3)"></div>
+  </div>
+
+  <!-- RIGHT: Inventory -->
+  <div class="fish-right">
+    <div class="pane-title">Inventory</div>
+    <div class="pane-body">
+      <div class="gold-bar"><span class="gb-l">Gold</span><span class="gb-v" id="inv-gld">0 gp</span></div>
+      <div class="inv-grid" id="inv-grid"></div>
+      <button class="gbn" onclick="dropAll()">Drop All</button>
+      <button class="sell-btn" onclick="sellAll()">Sell All Fish</button>
+    </div>
+    <div class="pane-title">Activity Log</div>
+    <div id="log-body" style="max-height:200px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- ══ QUEST SCREEN ══ -->
+<div class="screen" id="quest-screen">
+  <div class="quest-layout">
+    <div class="quest-list" id="quest-list"></div>
+    <div class="quest-main">
+      <div class="quest-info-panel" id="quest-info">
+        <div style="color:var(--text-dim);font-size:13px;margin-top:30px;text-align:center">Select a quest from the list</div>
+      </div>
+      <div id="dialogue-box" style="display:none">
+        <div class="dlg-header">
+          <div class="dlg-avatar" id="dlg-avatar">?</div>
+          <div><div class="dlg-npc" id="dlg-npc">NPC</div><div class="dlg-role" id="dlg-role">Unknown</div></div>
+        </div>
+        <div class="dlg-text" id="dlg-text"></div>
+        <div class="dlg-choices" id="dlg-choices"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PORT SCREEN ══ -->
+<div class="screen" id="port-screen">
+  <div class="port-layout">
+    <!-- LEFT: My Fleet -->
+    <div class="port-left">
+      <div class="pane-title">My Fleet</div>
+      <div class="pane-body" id="fleet-list" style="max-height:none"></div>
+      <div class="pane-title">Ship Market</div>
+      <div class="pane-body" id="ship-market"></div>
+    </div>
+    <!-- MID: Voyage Planner -->
+    <div class="port-mid">
+      <div class="pane-title">Voyage Planner</div>
+      <div class="voyage-planner" id="voyage-planner">
+        <div style="color:var(--text-dim);font-size:12px;margin-top:20px;text-align:center">Select a ship from your fleet to plan a voyage</div>
+      </div>
+      <div class="pane-title">Active Voyages</div>
+      <div class="pane-body" id="active-voyages"></div>
+    </div>
+    <!-- RIGHT: Crew Market + Returns -->
+    <div class="port-right">
+      <div class="pane-title">Crew for Hire</div>
+      <div class="pane-body" id="crew-market"></div>
+      <div class="pane-title">Cargo Returns</div>
+      <div class="pane-body" id="cargo-returns"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- COLLECTION LOG SCREEN -->
+<div class="screen" id="collection-screen">
+  <div style="display:flex;flex-wrap:wrap;width:100%">
+    <!-- Fish log -->
+    <div style="flex:1;min-width:280px;display:flex;flex-direction:column;border-bottom:1px solid var(--border)">
+      <div class="pane-title">Fish Collection Log <span id="fish-log-count" style="color:var(--text-dim);font-size:9px;margin-left:6px"></span></div>
+      <div style="padding:10px;overflow-y:auto;flex:1" id="fish-log-body"></div>
+    </div>
+    <!-- Loot log -->
+    <div style="flex:1;min-width:280px;display:flex;flex-direction:column;border-bottom:1px solid var(--border)">
+      <div class="pane-title">Loot Log <span id="loot-log-count" style="color:var(--text-dim);font-size:9px;margin-left:6px"></span></div>
+      <div style="padding:10px;overflow-y:auto;flex:1" id="loot-log-body"></div>
+    </div>
+    <!-- Stats -->
+    <div style="width:100%;background:var(--panel);display:flex;flex-direction:column">
+      <div class="pane-title">Stats</div>
+      <div class="pane-body" id="stats-body"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- CRAFTING SCREEN -->
+<div class="screen" id="crafting-screen">
+  <div style="display:flex;flex-wrap:wrap;width:100%;min-height:400px">
+    <!-- Recipe list -->
+    <div style="width:260px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column">
+      <div class="pane-title">Workbench — Recipes</div>
+      <div id="recipe-list" style="padding:10px;overflow-y:auto;flex:1"></div>
+    </div>
+    <!-- Crafting detail -->
+    <div style="flex:1;min-width:260px;display:flex;flex-direction:column">
+      <div class="pane-title">Craft Item</div>
+      <div id="craft-detail" style="padding:14px;flex:1;overflow-y:auto">
+        <div style="color:var(--text-dim);font-size:12px;margin-top:20px;text-align:center">Select a recipe to craft</div>
+      </div>
+    </div>
+    <!-- Active boosts + crafted log -->
+    <div style="width:220px;flex-shrink:0;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column">
+      <div class="pane-title">Active Boosts</div>
+      <div id="boosts-panel" style="padding:10px;border-bottom:1px solid var(--border)"></div>
+      <div class="pane-title">Crafted Items</div>
+      <div id="crafted-log" style="padding:10px;overflow-y:auto;flex:1"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #main -->
+</div><!-- #shell -->
+
+<!-- LEVEL UP -->
+<div id="lvlup">
+  <div class="lu-box">
+    <h2>Level Up!</h2>
+    <div class="lu-num" id="lu-n">2</div>
+    <p class="lu-msg" id="lu-msg">Keep fishing!</p>
+    <button class="lu-btn" onclick="closeLU()">Continue</button>
+  </div>
+</div>
+
+<!-- TOOLTIP -->
+<div id="tt">
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-row"><span class="tt-l">Count</span><span class="tt-v" id="tt-cnt"></span></div>
+  <div class="tt-row"><span class="tt-l">Value ea</span><span class="tt-v" id="tt-val"></span></div>
+  <div class="tt-row"><span class="tt-l">Total</span><span class="tt-v" id="tt-tot"></span></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// XP TABLE
+// ══════════════════════════════════════════
+var XP=[0,0,83,174,276,388,512,650,801,969,1154,1358,1584,1833,2107,2411,2746,3115,3523,3973,4470,5018,5624,6291,7028,7842,8740,9730,10824,12031,13363,14833,16456,18247,20224,22406,24815,27473,30408,33648,37224,41171,45529,50339,55649,61512,67983,75127,83014,91721,101333,111945,123660,136594,150872,166636,184040,203254,224466,247886,273742,302288,333804,368599,407015,449428,496254,547953,605032,668051,737627,814445,899257,992895,1096278,1210421,1336443,1475581,1629200,1798808,1986068,2192818,2421087,2673114,2951373,3258594,3597792,3972294,4385776,4842295,5346332,5902831,6517253,7195629,7944614,8771558,9684577,10692629,11805606,13034431];
+function lvlFromXp(x){var l=1;for(var i=2;i<=99;i++){if(x>=XP[i])l=i;else break;}return l;}
+
+// ══════════════════════════════════════════
+// FISH DATA
+// ══════════════════════════════════════════
+var FISH=[
+  {id:'crayfish',  n:'Crayfish',        e:'🦐', lvl:1,  xp:10,  gp:2,   t:2200},
+  {id:'shrimp',    n:'Shrimp',          e:'🍤', lvl:1,  xp:10,  gp:3,   t:2200},
+  {id:'sardine',   n:'Sardine',         e:'🐟', lvl:5,  xp:20,  gp:5,   t:2000},
+  {id:'herring',   n:'Herring',         e:'🐡', lvl:10, xp:30,  gp:8,   t:1900},
+  {id:'anchovy',   n:'Anchovies',       e:'🐠', lvl:15, xp:40,  gp:12,  t:1800},
+  {id:'trout',     n:'Trout',           e:'🐟', lvl:20, xp:50,  gp:18,  t:1700},
+  {id:'salmon',    n:'Salmon',          e:'🐠', lvl:30, xp:70,  gp:28,  t:1600},
+  {id:'tuna',      n:'Tuna',            e:'🐡', lvl:35, xp:80,  gp:40,  t:1500},
+  {id:'lobster',   n:'Lobster',         e:'🦞', lvl:40, xp:90,  gp:55,  t:1500},
+  {id:'swordfish', n:'Swordfish',       e:'🐬', lvl:50, xp:100, gp:80,  t:1400},
+  {id:'shark',     n:'Shark',           e:'🦈', lvl:76, xp:110, gp:150, t:1300},
+  {id:'minnow',    n:'Minnow',          e:'✨', lvl:68, xp:26,  gp:10,  t:1200},
+  {id:'jellyfish', n:'Green Jellyfish', e:'🪼', lvl:68, xp:75,  gp:120, t:1600},
+  {id:'manta',     n:'Manta Ray',       e:'🐋', lvl:79, xp:115, gp:200, t:1400},
+  {id:'turtle',    n:'Sea Turtle',      e:'🐢', lvl:79, xp:115, gp:180, t:1400},
+  {id:'gwshark',   n:'Great White',     e:'🦈', lvl:79, xp:120, gp:220, t:1400},
+  {id:'bjellyfish',n:'Blue Jellyfish',  e:'💙', lvl:91, xp:140, gp:260, t:1300},
+  {id:'sailfish',  n:'Sailfish',        e:'⚡', lvl:97, xp:160, gp:400, t:1100},
+  // RARE ship-only fish
+  {id:'kraken_beak',n:'Kraken Beak',   e:'🦑', lvl:99, xp:0,   gp:1200,t:9999, rare:true},
+  {id:'deepangel',  n:'Deep Anglerfish',e:'👁',  lvl:99, xp:0,   gp:800, t:9999, rare:true},
+  {id:'ghost_eel',  n:'Ghost Eel',      e:'👻', lvl:99, xp:0,   gp:600, t:9999, rare:true},
+];
+
+var FISH_EMO={crayfish:'🦐',shrimp:'🍤',sardine:'🐟',herring:'🐡',anchovy:'🐠',trout:'🐟',salmon:'🐠',tuna:'🐡',lobster:'🦞',swordfish:'🐬',shark:'🦈',minnow:'✨',jellyfish:'🪼',manta:'🐋',turtle:'🐢',gwshark:'🦈',bjellyfish:'💙',sailfish:'⚡',kraken_beak:'🦑',deepangel:'👁',ghost_eel:'👻',
+  // loot
+  seaweed:'🌿',driftwood:'🪵',old_boot:'👢',crab_claw:'🦀',pearl:'🫧',sea_glass:'💎',
+  anchor_ring:'💍',message_bottle:'🍾',gold_coin_bag:'💰',pirate_map:'🗺',
+  triton_shard:'🔱',sea_rune:'🔮',drowned_crown:'👑',wyrm_frag:'🐉',capt_compass:'🧭',
+  // crafted
+  pearl_necklace:'📿',sea_charm:'🔮',driftwood_lure:'🪝',lucky_bottle:'🍀',
+  ursula_brew:'🧪',memory_vessel:'💫',legs_potion:'🦵',mermaid_lure:'🧜',
+  pirate_compass:'🧭',wyrm_ward:'🐉',captains_log:'📖',mermaid_scale:'🐚'
+};
+
+// ══════════════════════════════════════════
+// FISHING SPOTS
+// ══════════════════════════════════════════
+var SPOTS=[
+  {id:'shallows',px:17,py:44,e:'🌊',n:'Shallows',    lvl:1,  fish:['crayfish','shrimp'],                          frenzy:false},
+  {id:'pier',    px:37,py:28,e:'⛵',n:'Pier End',     lvl:5,  fish:['sardine','herring','anchovy'],                frenzy:false},
+  {id:'reef',    px:60,py:32,e:'🪸',n:'Coral Reef',   lvl:20, fish:['trout','salmon'],                            frenzy:false},
+  {id:'open',    px:78,py:22,e:'🌀',n:'Open Water',   lvl:35, fish:['tuna','lobster','swordfish'],                frenzy:false},
+  {id:'deep',    px:87,py:36,e:'💀',n:'Deep Waters',  lvl:50, fish:['shark','swordfish','lobster'],               frenzy:false},
+  {id:'platform',px:52,py:18,e:'🏗', n:'DSF Platform',lvl:68, fish:['minnow','jellyfish','manta','turtle','gwshark'],frenzy:false},
+  {id:'bluezone',px:28,py:20,e:'💧',n:'Blue Zone',    lvl:91, fish:['bjellyfish','manta','gwshark'],              frenzy:false},
+  {id:'frenzy',  px:50,py:14,e:'🔥',n:'Frenzy Spot!',lvl:94, fish:[],                                            frenzy:true},
+  {id:'sailspot',px:70,py:12,e:'⚡',n:'Sailfish Run', lvl:97, fish:['sailfish'],                                 frenzy:false},
+];
+
+// ══════════════════════════════════════════
+// SHOP
+// ══════════════════════════════════════════
+var SHOP=[
+  {id:'rod',      n:'Fishing Rod',    e:'🎣', gp:50,   lvl:5,  desc:'Sardines & herring'},
+  {id:'bait',     n:'Fishing Bait',   e:'🪱', gp:10,   lvl:5,  desc:'x50 bait for rod',   consumable:true, qty:50},
+  {id:'flyrod',   n:'Fly Fishing Rod',e:'🪁', gp:120,  lvl:20, desc:'Trout & salmon'},
+  {id:'feathers', n:'Feathers',       e:'🪶', gp:15,   lvl:20, desc:'x50 feathers',        consumable:true, qty:50},
+  {id:'harpoon',  n:'Harpoon',        e:'🔱', gp:300,  lvl:35, desc:'Tuna, swordfish, shark'},
+  {id:'cage',     n:'Lobster Cage',   e:'🧺', gp:200,  lvl:40, desc:'Lobsters'},
+  {id:'outfit',   n:'Fishing Outfit', e:'👘', gp:2000, lvl:30, desc:'+5% XP'},
+  {id:'sharkout', n:'Shark Outfit',   e:'🦈', gp:8000, lvl:70, desc:'+7% XP'},
+];
+
+// ══════════════════════════════════════════
+// ROD UPGRADES
+// ══════════════════════════════════════════
+var ROD_UPGRADES=[
+  {id:'rod_tip1',   n:'Reinforced Tip',     e:'🔧', gp:400,   lvl:10, rodReq:'rod',     desc:'-8% catch time, +2% XP',       timeMod:-8,  xpMod:2},
+  {id:'rod_tip2',   n:'Steel Line Guides',  e:'⚙',  gp:900,   lvl:20, rodReq:'rod',     desc:'-10% catch time, +3% XP',      timeMod:-10, xpMod:3},
+  {id:'fly_silk',   n:'Silk Fly Line',      e:'🧵', gp:600,   lvl:25, rodReq:'flyrod',  desc:'-12% catch time, +2% XP',      timeMod:-12, xpMod:2},
+  {id:'fly_lure',   n:'Enchanted Lure',     e:'🪝', gp:1500,  lvl:35, rodReq:'flyrod',  desc:'+5% rare loot, +3% XP',        lootMod:5,   xpMod:3},
+  {id:'harp_chain', n:'Barbed Chain',       e:'⛓',  gp:1200,  lvl:40, rodReq:'harpoon', desc:'-15% catch time',               timeMod:-15, xpMod:0},
+  {id:'harp_reel',  n:'Power Reel',         e:'🌀', gp:3000,  lvl:55, rodReq:'harpoon', desc:'-10% time, +8% rare loot',      timeMod:-10, lootMod:8},
+  {id:'cage_bait',  n:'Scented Cage Bait',  e:'🦀', gp:800,   lvl:45, rodReq:'cage',    desc:'+4% rare loot, +3% XP',         lootMod:4,   xpMod:3},
+  {id:'master_rod', n:'Master Fisher Rod',  e:'🏆', gp:20000, lvl:80, rodReq:null,      desc:'-20% time, +10% XP, +15% loot', timeMod:-20, xpMod:10, lootMod:15, anyRod:true},
+];
+
+// ══════════════════════════════════════════
+// LOOT TABLE
+// ══════════════════════════════════════════
+var LOOT=[
+  {id:'seaweed',        n:'Seaweed',              e:'🌿', gp:2,    w:25, cat:'common'},
+  {id:'driftwood',      n:'Driftwood',            e:'🪵', gp:5,    w:20, cat:'common'},
+  {id:'old_boot',       n:'Old Boot',             e:'👢', gp:1,    w:15, cat:'common'},
+  {id:'crab_claw',      n:'Crab Claw',            e:'🦀', gp:35,   w:8,  cat:'uncommon'},
+  {id:'pearl',          n:'Pearl',                e:'🫧', gp:80,   w:7,  cat:'uncommon'},
+  {id:'sea_glass',      n:'Sea Glass',            e:'💎', gp:45,   w:7,  cat:'uncommon'},
+  {id:'anchor_ring',    n:'Rusted Ring',          e:'💍', gp:60,   w:5,  cat:'uncommon'},
+  {id:'message_bottle', n:'Message in Bottle',    e:'🍾', gp:120,  w:4,  cat:'uncommon'},
+  {id:'gold_coin_bag',  n:'Coin Pouch',           e:'💰', gp:200,  w:3,  cat:'rare'},
+  {id:'pirate_map',     n:'Torn Map Fragment',    e:'🗺', gp:350,  w:2,  cat:'rare'},
+  {id:'triton_shard',   n:'Triton Shard',         e:'🔱', gp:500,  w:2,  cat:'rare'},
+  {id:'sea_rune',       n:'Sea Rune',             e:'🔮', gp:400,  w:2,  cat:'rare'},
+  {id:'drowned_crown',  n:'Drowned Crown',        e:'👑', gp:2000, w:0.5,cat:'legendary'},
+  {id:'wyrm_frag',      n:'Wyrm Scale Fragment',  e:'🐉', gp:3000, w:0.3,cat:'legendary'},
+  {id:'capt_compass',   n:"Captain's Compass",    e:'🧭', gp:1500, w:0.2,cat:'legendary'},
+];
+
+// ══════════════════════════════════════════
+// SHIP DATA
+// ══════════════════════════════════════════
+var SHIP_TYPES=[
+  {id:'rowboat',  n:'Rowboat',      e:'🚣', gp:500,   crewSlots:1, cargo:3, speed:1, survivalBase:60, desc:'A humble start. Slow but affordable.'},
+  {id:'sloop',    n:'Sloop',        e:'⛵', gp:2500,  crewSlots:2, cargo:5, speed:2, survivalBase:70, desc:'Light and fast. Good for short routes.'},
+  {id:'brigantine',n:'Brigantine',  e:'🚢', gp:8000,  crewSlots:3, cargo:8, speed:3, survivalBase:75, desc:'Balanced warship. Handles storms well.'},
+  {id:'galleon',  n:'Galleon',      e:'🛳', gp:25000, crewSlots:5, cargo:14,speed:2, survivalBase:85, desc:'Massive cargo hold. Legendary resilience.'},
+  {id:'phantom',  n:'Phantom Vessel',e:'👻',gp:50000, crewSlots:4, cargo:10,speed:4, survivalBase:90, desc:'Ghost ship. Immune to sea monsters.', questLocked:true},
+];
+
+// ══════════════════════════════════════════
+// ROUTES
+// ══════════════════════════════════════════
+var ROUTES=[
+  {id:'coastal',   n:'Coastal Waters',    e:'🏖', dur:30,  lvlReq:1,  cargo:['shrimp','sardine','herring'],          gold:[20,80],   risk:10, desc:'30s · Low risk'},
+  {id:'tradewinds',n:'Trade Winds',       e:'💨', dur:60,  lvlReq:10, cargo:['tuna','lobster','gold_coins'],          gold:[80,200],  risk:20, desc:'60s · Medium risk'},
+  {id:'deepblue',  n:'The Deep Blue',     e:'🌊', dur:90,  lvlReq:30, cargo:['shark','manta','turtle','spices'],      gold:[150,400], risk:35, desc:'90s · Storm risk'},
+  {id:'maelstrom', n:'Maelstrom Pass',    e:'🌀', dur:120, lvlReq:50, cargo:['gwshark','bjellyfish','rare_charts'],   gold:[300,700], risk:55, desc:'120s · Dangerous'},
+  {id:'abyssal',   n:'The Abyss',         e:'💀', dur:180, lvlReq:76, cargo:['kraken_beak','deepangel','ghost_eel','ancient_gold'], gold:[500,1500],risk:70, desc:'180s · Deadly'},
+  {id:'cursed',    n:'Cursed Shallows',   e:'💀', dur:240, lvlReq:90, cargo:['ghost_eel','deepangel','kraken_beak','soul_compass'], gold:[800,2500],risk:80, desc:'240s · Near-suicidal', questLocked:true},
+];
+
+// ══════════════════════════════════════════
+// CREW
+// ══════════════════════════════════════════
+var CREW_POOL=[
+  {id:'old_ben',   n:'Old Ben',      e:'🧓', role:'Navigator',  gp:300,  bonus:'survivalBase+10, speed+1', survBonus:10, spdBonus:1},
+  {id:'marina',    n:'Marina',       e:'👩', role:'Fisher',     gp:200,  bonus:'+2 cargo fish', cargoBonus:2, survBonus:0},
+  {id:'ironjaw',   n:'Ironjaw',      e:'💪', role:'Deckhand',   gp:150,  bonus:'survivalBase+5',             survBonus:5,  spdBonus:0},
+  {id:'cook_bess', n:'Cook Bess',    e:'👩‍🍳',role:'Cook',        gp:100,  bonus:'+15% gold',      goldBonus:15, survBonus:0},
+  {id:'captain_red',n:'Capt. Red',   e:'🏴‍☠️',role:'Pirate Capt',gp:800,  bonus:'survivalBase+20, risk-15',survBonus:20,riskMod:-15},
+  {id:'ghost_sal', n:'Ghost Sal',    e:'👻', role:'Ghost',      gp:0,    bonus:'Survives any storm', survBonus:100, questLocked:true},
+  {id:'mira_deep', n:'Mira the Seer',e:'🔮', role:'Seer',       gp:1200, bonus:'Reveals abyss routes',survBonus:15,spdBonus:1},
+  {id:'twins',     n:'The Twins',    e:'👬', role:'Harpooners', gp:500,  bonus:'+3 rare fish chance', rarebonus:3, survBonus:5},
+];
+
+
+// ══════════════════════════════════════════
+// CRAFTING RECIPES
+// ══════════════════════════════════════════
+var RECIPES=[
+  // Always unlocked
+  {id:'pearl_necklace',  n:'Pearl Necklace',    e:'📿', cat:'jewelry',
+   ingredients:[{id:'pearl',qty:3},{id:'driftwood',qty:1}],
+   result:{id:'pearl_necklace',gp:320}, desc:'A beautiful necklace. Sells well.', unlocked:true},
+  {id:'sea_charm',       n:'Sea Charm',         e:'🔮', cat:'jewelry',
+   ingredients:[{id:'sea_glass',qty:2},{id:'anchor_ring',qty:1}],
+   result:{id:'sea_charm',gp:180}, desc:'Trinket made from sea glass. Sailors pay well for luck.', unlocked:true},
+  {id:'driftwood_lure',  n:'Driftwood Lure',    e:'🪝', cat:'fishing',
+   ingredients:[{id:'driftwood',qty:2},{id:'crab_claw',qty:1}],
+   result:{id:'driftwood_lure',gp:0,rodLootBonus:3,duration:300}, desc:'+3% loot chance for 5 minutes.', unlocked:true},
+  {id:'lucky_bottle',    n:'Lucky Bottle',      e:'🍀', cat:'misc',
+   ingredients:[{id:'message_bottle',qty:1},{id:'sea_glass',qty:1},{id:'seaweed',qty:2}],
+   result:{id:'lucky_bottle',gp:250}, desc:'A bottled wish. Someone will pay for hope.', unlocked:true},
+  // Quest-unlocked
+  {id:'ursula_brew',     n:"Ursula's Brew",     e:'🧪', cat:'quest',
+   ingredients:[{id:'triton_shard',qty:1},{id:'sea_rune',qty:1},{id:'seaweed',qty:3}],
+   result:{id:'ursula_brew',gp:0,questItem:true}, desc:"A dark brew Ursula requested. Don't smell it.", unlocked:false},
+  {id:'memory_vessel',   n:'Memory Vessel',     e:'💫', cat:'quest',
+   ingredients:[{id:'message_bottle',qty:1},{id:'gold_coin_bag',qty:1}],
+   result:{id:'memory_vessel',gp:0,questItem:true}, desc:"A vessel that holds a voice inside glass.", unlocked:false},
+  {id:'legs_potion',     n:'Legs Potion',       e:'🦵', cat:'quest',
+   ingredients:[{id:'ursula_brew',qty:1},{id:'mermaid_scale',qty:0,questItem:true},{id:'sea_rune',qty:1}],
+   result:{id:'legs_potion',gp:0,questItem:true}, desc:"Ursula's transformation magic. One use.", unlocked:false},
+  {id:'mermaid_lure',    n:'Mermaid Lure',      e:'🧜', cat:'fishing',
+   ingredients:[{id:'mermaid_scale',qty:0,questItem:true},{id:'driftwood',qty:2},{id:'pearl',qty:1}],
+   result:{id:'mermaid_lure',gp:0,rodLootBonus:10,rareFishBonus:5,duration:600}, desc:'+10% loot, +5% rare fish for 10 min.', unlocked:false},
+  {id:'pirate_compass',  n:'Pirate Compass',    e:'🧭', cat:'navigation',
+   ingredients:[{id:'pirate_map',qty:1},{id:'anchor_ring',qty:1},{id:'driftwood',qty:1}],
+   result:{id:'pirate_compass',gp:800}, desc:'A working compass made from a map fragment.', unlocked:true},
+  {id:'wyrm_ward',       n:'Wyrm Ward',         e:'🐉', cat:'misc',
+   ingredients:[{id:'wyrm_frag',qty:1},{id:'sea_rune',qty:1},{id:'triton_shard',qty:1}],
+   result:{id:'wyrm_ward',gp:3500}, desc:'A ward against sea monsters. Extremely valuable.', unlocked:true},
+  {id:'captains_log',    n:"Captain's Log",     e:'📖', cat:'misc',
+   ingredients:[{id:'capt_compass',qty:1},{id:'message_bottle',qty:2}],
+   result:{id:'captains_log',gp:2200}, desc:"A legendary navigator's tool.", unlocked:true},
+];
+
+// All craftable results (so inventory can show them)
+var CRAFT_RESULTS={
+  pearl_necklace:{n:'Pearl Necklace',   e:'📿', gp:320},
+  sea_charm:     {n:'Sea Charm',        e:'🔮', gp:180},
+  driftwood_lure:{n:'Driftwood Lure',   e:'🪝', gp:0},
+  lucky_bottle:  {n:'Lucky Bottle',     e:'🍀', gp:250},
+  ursula_brew:   {n:"Ursula's Brew",    e:'🧪', gp:0},
+  memory_vessel: {n:'Memory Vessel',    e:'💫', gp:0},
+  legs_potion:   {n:'Legs Potion',      e:'🦵', gp:0},
+  mermaid_lure:  {n:'Mermaid Lure',     e:'🧜', gp:0},
+  pirate_compass:{n:'Pirate Compass',   e:'🧭', gp:800},
+  wyrm_ward:     {n:'Wyrm Ward',        e:'🐉', gp:3500},
+  captains_log:  {n:"Captain's Log",    e:'📖', gp:2200},
+  mermaid_scale: {n:'Mermaid Scale',    e:'🐚', gp:0},
+};
+
+// ══════════════════════════════════════════
+// QUEST DATA
+// ══════════════════════════════════════════
+var QUESTS=[
+{
+  id:'q1', n:"The Old Captain's Request", giver:'Captain Aldric', avatar:'👴', role:'Retired Sea Captain',
+  desc:"Old Captain Aldric sits at the end of the dock, pipe in hand. He says you remind him of himself — young and restless. He wants to see if you have the stomach for the sea.",
+  lvlReq:1, shipReq:0, prevQuest:null,
+  stages:[
+    {
+      dlg:"Ahh, a fresh face at the docks. You want to fish, do ye? Well, I was the finest fisher Saltmere ever saw. Before the sea took my leg.",
+      choices:[
+        {txt:"Tell me about the sea, Captain.", next:1},
+        {txt:"What happened to your leg?", next:2},
+      ]
+    },
+    {
+      dlg:"She's beautiful and cruel, like all great things. You'll learn that soon enough. But first — catch me 5 shrimp. Prove ye can hold a net before I waste words on ye.",
+      choices:[{txt:"I'll do it.", next:'accept'}]
+    },
+    {
+      dlg:"Ha! The sea took it and kept it. Said it was a fair trade for forty years of plunder. Now — enough about me. Catch me 5 shrimp. Old bones need broth.",
+      choices:[{txt:"Consider it done.", next:'accept'}]
+    }
+  ],
+  objectives:[{txt:'Catch 5 Shrimp', type:'catch', fish:'shrimp', qty:5, progress:0}],
+  rewards:{xp:100, gold:300, item:'rod'},
+  rewardText:'+100 XP, 150 gold, Fishing Rod',
+  completeDlg:{
+    dlg:"Ha! You actually did it. There's salt in your blood after all. Take this rod — belonged to my son before he left for the capital. Maybe it'll serve you better.",
+    choices:[{txt:"Thank you, Captain.", next:'done'}]
+  }
+},
+{
+  id:'q2', n:"The Harbormaster's Debt", giver:'Harbormaster Vex', avatar:'📋', role:'Port Official',
+  desc:"Harbormaster Vex controls who enters and leaves the port. He's charging you extra docking fees — unless you can bring him something better than coin.",
+  lvlReq:5, shipReq:0, prevQuest:'q1',
+  stages:[
+    {
+      dlg:"Fishing again? You'll need my blessing to use the deeper spots, you know. Port fees aren't cheap. UNLESS... you could do something for me instead.",
+      choices:[
+        {txt:"What do you want?", next:1},
+        {txt:"I'll pay the fees.", next:2}
+      ]
+    },
+    {
+      dlg:"My sister runs a restaurant in the east quarter. She's been asking for fresh tuna and lobster. Bring me 3 tuna and 2 lobsters, and I'll waive your fees AND open the deep pier for you.",
+      choices:[{txt:"Deal.", next:'accept'},{txt:"That's a lot of fish...", next:3}]
+    },
+    {
+      dlg:"Smart. Fees are 200 gold. Pay up. ...Actually, wait. I just thought of something more useful to me.",
+      choices:[{txt:"What is it?", next:1}]
+    },
+    {
+      dlg:"I know, I know. But think of the access you'll gain! The deep pier opens routes that most fishers only dream of.",
+      choices:[{txt:"Fine. I'll do it.", next:'accept'}]
+    }
+  ],
+  objectives:[
+    {txt:'Catch 3 Tuna', type:'catch', fish:'tuna', qty:3, progress:0},
+    {txt:'Catch 2 Lobsters', type:'catch', fish:'lobster', qty:2, progress:0}
+  ],
+  rewards:{xp:300, gold:400, unlocksSpot:'deep'},
+  rewardText:'+300 XP, 400 gold, Deep Waters unlocked',
+  completeDlg:{
+    dlg:"Excellent. My sister will be delighted. As promised — the deep pier is yours. And... between us? There are things in the deep that no net should ever pull up. Tread carefully.",
+    choices:[{txt:"I'll remember that.", next:'done'}]
+  }
+},
+{
+  id:'q3', n:"Storm on the Horizon", giver:'Weatherwitch Nara', avatar:'🔮', role:'Seer of the Docks',
+  desc:"Nara has lived on the docks for decades, reading the skies. She says a storm is coming — not just weather, but something older. She needs a special fish to divine the truth.",
+  lvlReq:15, shipReq:0, prevQuest:'q2',
+  stages:[
+    {
+      dlg:"You feel it too, don't you? The water's been wrong for days. Fish swimming backwards, birds flying inland. Something beneath the sea is *angry*.",
+      choices:[
+        {txt:"What can be done?", next:1},
+        {txt:"Sounds like superstition.", next:2}
+      ]
+    },
+    {
+      dlg:"I need a salmon from the coral reef — caught at night, not traded. A fish that has seen the deep currents. Its scales will tell me what moves below.",
+      choices:[{txt:"I'll fish it for you.", next:'accept'}]
+    },
+    {
+      dlg:"Ha! Said that about the great Drowning of 1387 too, didn't they? Forty ships, superstition. I'll need a salmon — one you catch yourself. Humor an old woman.",
+      choices:[{txt:"All right, all right.", next:'accept'}]
+    }
+  ],
+  objectives:[{txt:'Catch 5 Salmon', type:'catch', fish:'salmon', qty:5, progress:0}],
+  rewards:{xp:600, gold:350, unlocksCrew:'ghost_sal'},
+  rewardText:'+600 XP, 350 gold, Ghost Sal unlocked (crew)',
+  completeDlg:{
+    dlg:"Yes... yes. The scales confirm it. Something ancient stirs in the Abyss. It has a name — the Tide Wyrm. And it hungers. You will face it eventually. When you do, remember: steel does not wound it. Only the light of a ghost lantern can.",
+    choices:[{txt:"Where do I get a ghost lantern?", next:'done'}]
+  }
+},
+{
+  id:'q4', n:"The Pirate Parley", giver:'Captain Red', avatar:'🏴‍☠️', role:'Pirate of the Crimson Wake',
+  desc:"A notorious pirate captain wants to negotiate — or at least, that's what the note stuck to your door with a fish knife said. Meeting him could be dangerous. Or lucrative.",
+  lvlReq:30, shipReq:0, prevQuest:'q3',
+  stages:[
+    {
+      dlg:"Before ye reach for that knife — I'm here to talk. Word is you've been making waves. Good ones. I need someone who knows these waters. And can keep their mouth shut.",
+      choices:[
+        {txt:"What's the job?", next:1},
+        {txt:"I don't work with pirates.", next:2}
+      ]
+    },
+    {
+      dlg:"Ha! I like the directness. I need charts from three deep-sea routes. In return? I'll tell you where the old smugglers hid their ships. Ships worth more than gold.",
+      choices:[{txt:"I can get those charts.", next:'accept'}]
+    },
+    {
+      dlg:"Smart. And boring. You're no fun. Still — I need those charts. And I'll pay you handsomely. The sea doesn't care about your morals, friend. Only your skill.",
+      choices:[{txt:"...Fine. One time.", next:'accept'}]
+    }
+  ],
+  objectives:[
+    {txt:'Send a ship on Trade Winds', type:'voyage', route:'tradewinds', qty:1, progress:0},
+    {txt:'Send a ship on The Deep Blue', type:'voyage', route:'deepblue', qty:1, progress:0},
+  ],
+  rewards:{xp:1200, gold:800, unlocksCrew:'captain_red', unlocksShip:'phantom'},
+  rewardText:'+1200 XP, 800 gold, Capt. Red joins crew, Phantom Vessel unlocked',
+  completeDlg:{
+    dlg:"Ha! You actually pulled it off. Here's the location of the old smugglers' cove. And... I'll sail with you. Just once. Maybe twice. The Crimson Wake needs an honest harbor for a change.",
+    choices:[{txt:"Welcome aboard, Captain.", next:'done'}]
+  }
+},
+{
+  id:'q5', n:"Saltmere's Hunger", giver:'Mayor Thorne', avatar:'🎩', role:'Mayor of Saltmere',
+  desc:"The town is running short on food. The mayor is desperate — trade ships stopped arriving last month and nobody knows why. He's asking every able fisherman to help.",
+  lvlReq:20, shipReq:0, prevQuest:'q1',
+  stages:[
+    {
+      dlg:"Fisherman! Good, I need you. Our supply ships have gone missing — three of them. The town has food for perhaps two more weeks. I need someone to fill the gap.",
+      choices:[
+        {txt:"How can I help?", next:1},
+        {txt:"What happened to the ships?", next:2}
+      ]
+    },
+    {
+      dlg:"Fish. As much as you can. Anything — lobster, tuna, salmon. The dockside smokehouse will take anything you bring and pay above market rate. Will you do it?",
+      choices:[{txt:"I'll fish everything I can.", next:'accept'}]
+    },
+    {
+      dlg:"I wish I knew. They vanished near the Maelstrom Pass. I've sent scouts but... nothing. Please — the fishing is more urgent right now. Solve one crisis at a time.",
+      choices:[{txt:"All right. I'll fish.", next:'accept'}]
+    }
+  ],
+  objectives:[
+    {txt:'Catch 10 Tuna', type:'catch', fish:'tuna', qty:10, progress:0},
+    {txt:'Catch 10 Lobster', type:'catch', fish:'lobster', qty:10, progress:0},
+    {txt:'Catch 10 Salmon', type:'catch', fish:'salmon', qty:10, progress:0},
+  ],
+  rewards:{xp:800, gold:1500},
+  rewardText:'+800 XP, 1500 gold',
+  completeDlg:{
+    dlg:"You've saved lives today. I mean that literally. The smokehouse is already at work. ...And those missing ships? My scouts found wreckage near the Maelstrom. Something tore them apart from below. Something big.",
+    choices:[{txt:"The Tide Wyrm?", next:'done'}]
+  }
+},
+{
+  id:'q6', n:"The Missing Crew", giver:'Widow Sela', avatar:'👩', role:'Fisherman\'s Widow',
+  desc:"Sela's husband sailed the Maelstrom Pass six weeks ago and never came back. She doesn't want gold — she wants to know what happened. She's asking you to sail that same route.",
+  lvlReq:40, shipReq:1, prevQuest:'q5',
+  stages:[
+    {
+      dlg:"My Tobias would have come home. He always came home. They say the sea took him but I know... I *know* something is wrong out there. Please. You have a ship. I don't.",
+      choices:[
+        {txt:"I'll look into it.", next:1},
+        {txt:"The Maelstrom is too dangerous.", next:2}
+      ]
+    },
+    {
+      dlg:"Sail the Maelstrom Pass. Look for wreckage. His ship was called the *Grey Minnow* — red sails, black trim. If you find his logbook... please bring it to me.",
+      choices:[{txt:"I'll find it.", next:'accept'}]
+    },
+    {
+      dlg:"I know. I *know*. But what if he survived? What if he's stranded on some island? I would never forgive myself if I didn't try. You're braver than me — please go.",
+      choices:[{txt:"I'll go.", next:'accept'}]
+    }
+  ],
+  objectives:[
+    {txt:'Send a ship on Maelstrom Pass', type:'voyage', route:'maelstrom', qty:1, progress:0}
+  ],
+  rewards:{xp:2000, gold:0, questItem:'grey_minnow_log', unlocksRoute:'abyssal'},
+  rewardText:'+2000 XP, Grey Minnow\'s Logbook, Abyss route unlocked',
+  completeDlg:{
+    dlg:"...*long silence*... His last entry says: 'Something beneath the waves. Watching. Not hostile — not yet. It circled us for two days. Then the storms came and...' The rest is water-stained. He was alive when he wrote this. The Wyrm didn't kill him. Something ELSE did.",
+    choices:[{txt:"I'll find out what.", next:'done'}]
+  }
+},
+{
+  id:'q7', n:"Ghosts of the Deep", giver:'Ghost Sal', avatar:'👻', role:'Spirit of a Lost Sailor',
+  desc:"Ghost Sal — a spectral sailor bound to the docks — has been watching you. She says the spirits of Tobias's crew are trapped beneath the Abyss, and only a certain catch can free them.",
+  lvlReq:60, shipReq:1, prevQuest:'q6',
+  stages:[
+    {
+      dlg:"You can see me. Most can't anymore. I drowned here thirty years ago and I've been stuck ever since. But I can help you — if you help those poor souls beneath.",
+      choices:[
+        {txt:"What souls?", next:1},
+        {txt:"You're a ghost?!", next:2}
+      ]
+    },
+    {
+      dlg:"The crew of the Grey Minnow. Trapped in the Abyss, their spirits bound to the wreck. To free them, you must catch a Ghost Eel from those waters. The eels carry soul-light.",
+      choices:[{txt:"I'll sail the Abyss.", next:'accept'}]
+    },
+    {
+      dlg:"Obviously. Try not to be rude to the dead — we have long memories. The crew of the Grey Minnow need your help. Catch a Ghost Eel from the Abyss.",
+      choices:[{txt:"I'll do it.", next:'accept'}]
+    }
+  ],
+  objectives:[
+    {txt:'Retrieve Ghost Eel from the Abyss', type:'shipCargo', item:'ghost_eel', qty:1, progress:0}
+  ],
+  rewards:{xp:4000, gold:1000, unlocksCrew:'ghost_sal'},
+  rewardText:'+4000 XP, 1000 gold, Ghost Sal joins your crew',
+  completeDlg:{
+    dlg:"*The ghost eel glows softly in your hands.* There. I can feel them passing on. Thank you. All those years... and now peace. As for me — I choose to stay. I've grown fond of these docks. And you might need a ghost where you're going.",
+    choices:[{txt:"Glad to have you.", next:'done'}]
+  }
+},
+{
+  id:'q8', n:"The Abyss Speaks", giver:'Weatherwitch Nara', avatar:'🔮', role:'Seer of the Docks',
+  desc:"Nara has decoded the salmon scales from before. The Tide Wyrm is preparing to breach the surface. She needs components from the deepest waters to complete a binding ritual.",
+  lvlReq:70, shipReq:1, prevQuest:'q7',
+  stages:[
+    {
+      dlg:"I've been reading the currents for weeks. The Tide Wyrm is awake and it's moving toward Saltmere. The old binding ritual requires three components from the deep. Without them...",
+      choices:[
+        {txt:"What happens without them?", next:1},
+        {txt:"Tell me what I need.", next:2}
+      ]
+    },
+    {
+      dlg:"The town drowns. All of it. In a single night. The Wyrm doesn't hate us — it simply feeds. You must bring me a Kraken Beak, a Deep Anglerfish, and an ancient chart from the Abyss.",
+      choices:[{txt:"I'll get them.", next:'accept'}]
+    },
+    {
+      dlg:"A Kraken Beak and a Deep Anglerfish, both from the Abyssal route. And an ancient chart — they sometimes drift up from old wrecks down there.",
+      choices:[{txt:"On my way.", next:'accept'}]
+    }
+  ],
+  objectives:[
+    {txt:'Retrieve Kraken Beak from the Abyss', type:'shipCargo', item:'kraken_beak', qty:1, progress:0},
+    {txt:'Retrieve Deep Anglerfish from the Abyss', type:'shipCargo', item:'deepangel', qty:1, progress:0},
+  ],
+  rewards:{xp:8000, gold:2000, unlocksRoute:'cursed'},
+  rewardText:'+8000 XP, 2000 gold, Cursed Shallows route unlocked',
+  completeDlg:{
+    dlg:"*Nara works through the night.* The binding is set. The Wyrm will sleep for... perhaps a century. Perhaps a decade. Hard to say. But we have bought time. And you have earned more than gold, fisherman. You have earned legend.",
+    choices:[{txt:"Is it truly over?", next:'done'}]
+  }
+},
+{
+  id:'q9', n:"The Phantom Cove", giver:'Captain Red', avatar:'🏴‍☠️', role:'Pirate of the Crimson Wake',
+  desc:"Captain Red has found a map fragment pointing to the legendary Phantom Cove — a place where ghost ships anchor between the living and the dead. He needs your help to reach it.",
+  lvlReq:80, shipReq:2, prevQuest:'q8',
+  stages:[
+    {
+      dlg:"Remember that map I showed you? I found the second half. The Phantom Cove is real. It exists in the space between the Cursed Shallows and the Abyss. And it's full of treasure. Full.",
+      choices:[
+        {txt:"You had me at treasure.", next:1},
+        {txt:"Ghost ships? That sounds insane.", next:2}
+      ]
+    },
+    {
+      dlg:"Ha! There's the fisher I remember. But getting there requires the Phantom Vessel — and you'll need to sail the Cursed Shallows twice to find the entrance. You game?",
+      choices:[{txt:"I'm game.", next:'accept'}]
+    },
+    {
+      dlg:"Oh it absolutely is. But insane things have a way of paying off. Ask any pirate who survived the Maelstrom. Sail the Cursed Shallows twice. The entrance reveals itself.",
+      choices:[{txt:"Let's do it.", next:'accept'}]
+    }
+  ],
+  objectives:[
+    {txt:'Send Phantom Vessel on Cursed Shallows', type:'voyage', route:'cursed', ship:'phantom', qty:2, progress:0}
+  ],
+  rewards:{xp:15000, gold:5000, questItem:'soul_compass'},
+  rewardText:'+15000 XP, 5000 gold, Soul Compass (lore item)',
+  completeDlg:{
+    dlg:"*The Phantom Cove shimmers between worlds.* Look at all of it. Ships from three centuries. Their treasures, unclaimed. You know what this means? We haven't found the end. We've found the *beginning*.",
+    choices:[{txt:"There's always another horizon.", next:'done'}]
+  }
+},
+{
+  id:'q10', n:"The Final Tide", giver:'Weatherwitch Nara', avatar:'🔮', role:'Seer of the Docks',
+  desc:"The binding weakens. Nara's ritual was only temporary. The Tide Wyrm stirs again — this time, with fury. The only way to stop it permanently requires a soul freely given to the deep.",
+  lvlReq:90, shipReq:2, prevQuest:'q9',
+  stages:[
+    {
+      dlg:"It is breaking free. I can feel it in my teeth, in my dreams. The binding is unraveling. There is only one way to stop it permanently now. One way that cannot be undone.",
+      choices:[
+        {txt:"Tell me.", next:1},
+        {txt:"What does it cost?", next:2}
+      ]
+    },
+    {
+      dlg:"The Wyrm must be met in the Cursed Shallows, at the apex of the storm. Not fought — *spoken to*. And someone must carry the soul compass into the deep and stay there. As anchor. Forever.",
+      choices:[{txt:"Ghost Sal. She'll do it.", next:3},{txt:"I'll go myself.", next:4}]
+    },
+    {
+      dlg:"Everything. The question is whether Saltmere is worth it. I believe it is. I always have.",
+      choices:[{txt:"Then let's end this.", next:1}]
+    },
+    {
+      dlg:"...She already offered. I told her it wasn't her burden. But she said — and I remember her exact words — 'I'm already dead. Let me mean something.' She'll do it.",
+      choices:[{txt:"Then we sail together.", next:'accept'}]
+    },
+    {
+      dlg:"Don't be dramatic. Ghost Sal has already volunteered. She's been waiting for this since the day you freed her. Let her have this.",
+      choices:[{txt:"...All right. We sail.", next:'accept'}]
+    }
+  ],
+  objectives:[
+    {txt:'Complete the Abyss route', type:'voyage', route:'abyssal', qty:1, progress:0},
+    {txt:'Complete the Cursed Shallows route', type:'voyage', route:'cursed', qty:1, progress:0},
+  ],
+  rewards:{xp:50000, gold:10000, questItem:'tide_wyrm_scale'},
+  rewardText:'50000 XP, 10000 gold, Tide Wyrm Scale (legendary), Saltmere saved',
+  completeDlg:{
+    dlg:"*The sea goes calm. Utterly, impossibly calm.* It is done. Ghost Sal is down there now — anchor and guardian both. The Tide Wyrm will sleep until the world itself ends. And Saltmere... Saltmere will remember your name. Long after these docks have rotted and the sea has swallowed this bay whole.",
+    choices:[{txt:"For the sea.", next:'done'}]
+  }
+},{
+  id:'lm1', n:"The Girl Beneath the Waves", giver:'Ariel', avatar:'🧜', role:'Sea Maid of the Depths',
+  desc:"A pale hand reaches from the water as you fish the reef. A young mermaid stares at your boots like she has never seen feet before. She wants to trade.",
+  lvlReq:15, shipReq:0, prevQuest:'q1',
+  stages:[
+    {dlg:"You have legs. Two of them. Do they hurt? I have been watching humans on these docks for three tides and I cannot understand how you balance. My name is Ariel. I collect things from the surface. I found a fork last week. What IS a fork for?",
+     choices:[{txt:"It is for eating.",next:1},{txt:"What do you collect?",next:2}]},
+    {dlg:"Eating! Extraordinary. I use mine to comb my hair. Anyway. I want to trade. Bring me a pearl and a piece of sea glass for my collection. In return I will mark you the spot where the fish come so thick you could practically walk on them.",
+     choices:[{txt:"Deal.",next:'accept'}]},
+    {dlg:"Oh! A dinglehopper — that is what I call it. Also three rusted rings, a sail fragment, a working lantern, and seventeen bottles. Only four had messages. One just said help. I did not know what to do with that one. Anyway — bring me a pearl and sea glass?",
+     choices:[{txt:"I will find them.",next:'accept'}]}
+  ],
+  objectives:[
+    {txt:'Find a Pearl (loot from fishing)', type:'loot', item:'pearl', qty:1, progress:0},
+    {txt:'Find Sea Glass (loot from fishing)', type:'loot', item:'sea_glass', qty:1, progress:0}
+  ],
+  rewards:{xp:500, gold:200},
+  rewardText:'+500 XP, 200 gold',
+  completeDlg:{dlg:"The pearl goes here and the glass goes there. Perfect. As promised the fish gather due north of the reef at dawn. Oh — do you have spare boots? Asking for a friend.",choices:[{txt:"I will keep an eye out.",next:'done'}]}
+},{
+  id:'lm2', n:"The Sea Witch's Price", giver:'Ursula', avatar:'🐙', role:'Sea Witch of the Trench',
+  desc:"A large figure emerges from the shadows under the dock — tentacles, cold eyes, and a smile that does not reach them. She knows what Ariel wants. She has a proposition.",
+  lvlReq:25, shipReq:0, prevQuest:'lm1',
+  stages:[
+    {dlg:"The little fish has grown fond of you. How sweet. She wants legs — she has wanted them for years. I can give them to her but there is a price. I need a triton shard and a sea rune. You are going to help me gather them.",
+     choices:[{txt:"Why would I help you?",next:1},{txt:"What does Ariel pay?",next:2}]},
+    {dlg:"Because I will pay you very well. And because if you do not help me I find another way. A messier way. Involving that lovely little boat of yours. Now shall we be civilised?",
+     choices:[{txt:"Fine. Shard and rune.",next:'accept'}]},
+    {dlg:"Her voice. She does not know that part yet. Find me the shard and the rune first. We will discuss the rest when you have proven you are serious.",
+     choices:[{txt:"I will get them.",next:'accept'}]}
+  ],
+  objectives:[
+    {txt:'Find Triton Shard (rare loot)', type:'loot', item:'triton_shard', qty:1, progress:0},
+    {txt:'Find Sea Rune (rare loot)', type:'loot', item:'sea_rune', qty:1, progress:0}
+  ],
+  rewards:{xp:1000, gold:500, craftUnlock:'ursula_brew'},
+  rewardText:"+1000 XP, 500 gold, Ursula's Brew recipe unlocked",
+  completeDlg:{dlg:"Yes, these will do. About the voice — there is a loophole in the old contract. A memory of the voice, described by a witness who has heard it, counts as payment. Bring me a Memory Vessel and I accept that instead. The girl keeps her voice. I keep my dignity. Everyone wins.",choices:[{txt:"I do not trust you.",next:'done'}]}
+},{
+  id:'lm3', n:"A Voice Like Silver", giver:'Ariel', avatar:'🧜', role:'Sea Maid of the Depths',
+  desc:"Ariel is singing when you arrive. When she sees you she stops. Her expression tells you she already knows about the loophole.",
+  lvlReq:35, shipReq:0, prevQuest:'lm2',
+  stages:[
+    {dlg:"She told you about my voice. I knew she would. I have been watching Ursula make deals for a hundred years. The price is always something you love. But you found the loophole. A memory vessel — take a message bottle and a coin pouch to the Workbench and craft it. I will describe my voice to you. You carry the memory. Ursula gets the vessel. I keep the real thing.",
+     choices:[{txt:"Let us do it.",next:'accept'},{txt:"What does your voice sound like?",next:1}]},
+    {dlg:"Like the deep water when it is calm. Like something that was always there, just beneath where sound usually lives. You will know it when the vessel is full. Go craft it.",
+     choices:[{txt:"On my way.",next:'accept'}]}
+  ],
+  objectives:[
+    {txt:'Craft a Memory Vessel (Workbench)', type:'craft', item:'memory_vessel', qty:1, progress:0}
+  ],
+  rewards:{xp:2000, gold:600},
+  rewardText:'+2000 XP, 600 gold',
+  completeDlg:{dlg:"I can hear it. My own voice echoing inside the glass. It is strange — hearing yourself from outside. Thank you. Now we bring this to Ursula. Whatever she says — stay close.",choices:[{txt:"Right behind you.",next:'done'}]}
+},{
+  id:'lm4', n:"The Deal Is Done", giver:'Ursula', avatar:'🐙', role:'Sea Witch of the Trench',
+  desc:"Ursula examines the memory vessel with narrowed eyes. She turns it over and over, listening. Then she smiles — something genuinely surprised in it.",
+  lvlReq:45, shipReq:0, prevQuest:'lm3',
+  stages:[
+    {dlg:"Clever. Very clever. The loophole is legitimate — I checked the old contract myself. Very well. The deal stands amended. She gets her legs for one week. After that she chooses — return to the sea or remain on land forever. But I need one more thing. A drowned crown. There is one in the deep trench.",
+     choices:[{txt:"I will find it.",next:'accept'},{txt:"You are not going to cause more trouble?",next:1}]},
+    {dlg:"She is not interesting to me anymore. You, on the other hand — someone who found a contractual loophole in one of my oldest deals? You might be worth watching. The crown. Bring it.",
+     choices:[{txt:"Fine.",next:'accept'}]}
+  ],
+  objectives:[
+    {txt:'Find a Drowned Crown (legendary loot)', type:'loot', item:'drowned_crown', qty:1, progress:0}
+  ],
+  rewards:{xp:4000, gold:1200, craftUnlock:'legs_potion'},
+  rewardText:"+4000 XP, 1200 gold, Legs Potion recipe unlocked",
+  completeDlg:{dlg:"Yes. From old King Aldric's fleet — 1348. I have wanted this for seventy years. Tell the girl she has one week. And tell her — for what it is worth — I hope she chooses well. Even witches have soft spots. Do not tell anyone I said that.",choices:[{txt:"Your secret is safe.",next:'done'}]}
+},{
+  id:'lm5', n:"Where the Sea Meets the Shore", giver:'Ariel', avatar:'🧜', role:'Sea Maid of the Depths',
+  desc:"Seven days have passed. Ariel stands at the water's edge, the tide coming in. She has to choose.",
+  lvlReq:50, shipReq:0, prevQuest:'lm4',
+  stages:[
+    {dlg:"The sun is different up here. Warmer. Everything smells like salt and wood smoke and possibility. I understand now why you love it. I also understand why I thought I would. Both, if I could. But I cannot. *turns to the sea* My father is down there. My sisters. The sunken cities I know by name. And yet this is also real. The choice they never tell you about is that you do not stop loving the place you left.",
+     choices:[{txt:"What does your heart say?",next:1},{txt:"There is no wrong answer.",next:1}]},
+    {dlg:"Both. Neither. Something new. I am going to swim the sea and walk the shore season by season. And I want to leave something with you — a scale from my tail. So someone on land remembers I was here. First — do you have the potion?",
+     choices:[{txt:"Right here.",next:'accept'}]}
+  ],
+  objectives:[
+    {txt:'Give Ariel the Legs Potion (craft it)', type:'craft', item:'legs_potion', qty:1, progress:0}
+  ],
+  rewards:{xp:8000, gold:2000, questItem:'mermaid_scale', craftUnlock:'mermaid_lure'},
+  rewardText:"+8000 XP, 2000 gold, Mermaid Scale, Mermaid Lure recipe unlocked",
+  completeDlg:{dlg:"Thank you. For the boots lesson. For the loophole. For not asking me to stay or to go. Just for being here while I figured it out. The sea will remember you, fisherman. I will make sure of it.",choices:[{txt:"Safe travels Ariel. In both worlds.",next:'done'}]}
+}
+];
+
+// ══════════════════════════════════════════
+// CARGO ITEMS (non-fish)
+// ══════════════════════════════════════════
+var CARGO_ITEMS={
+  gold_coins:   {n:'Gold Coins',      e:'🪙', gp:50},
+  spices:       {n:'Exotic Spices',   e:'🌶', gp:80},
+  rare_charts:  {n:'Sea Chart',       e:'🗺', gp:200},
+  ancient_gold: {n:'Ancient Gold',    e:'🏺', gp:300},
+  soul_compass: {n:'Soul Compass',    e:'🧭', gp:0},
+  grey_minnow_log:{n:"Grey Minnow's Log",e:'📖',gp:0},
+  tide_wyrm_scale:{n:'Tide Wyrm Scale',e:'🐉',gp:0},
+};
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+var S={
+  xp:0, level:1, gold:0, caught:0,
+  inv:[], rod:'Small Net', bait:'None', outfit:'None', bonusPct:0,
+  spot:'shallows', fishing:false, timer:null,
+  streak:0, streakBonus:0,
+  // port
+  fleet:[],      // {typeId, name, crewIds[], upgradeLevel, status:'port'|'sea', voyageData}
+  hiredCrew:[],  // crew ids hired
+  pendingCargo:[], // items waiting to collect
+  completedVoyages:0,
+  // quests
+  questStates:{}, // {qid: {status:'locked'|'available'|'active'|'complete', progress:{obj_idx:n}, stageIdx}}
+  questItems:[],
+  selectedQuest:null,
+  // unlocks
+  unlockedRoutes:['coastal','tradewinds'],
+  unlockedShips:['rowboat','sloop'],
+  unlockedCrew:['old_ben','marina','ironjaw','cook_bess'],
+  rodUpgrades:[],  // ids of purchased upgrades
+  rodTimeMod:0, rodXpMod:0, rodLootMod:0,  // summed upgrade bonuses
+  collectionLog:{},  // {fishId: {count, firstCaught}}
+  lootLog:{},        // {lootId: {count, firstFound}}
+  craftedItems:{},   // {itemId: count}
+  activeBoosts:[],   // [{type,val,expires}]
+  unlockedRecipes:[] // recipe ids unlocked via quests
+};
+
+// init quest states
+QUESTS.forEach(function(q){ S.questStates[q.id]={status:q.prevQuest?'locked':'available', progress:{}, stageIdx:0}; });
+
+// helpers
+function fF(id){
+  for(var i=0;i<FISH.length;i++)if(FISH[i].id===id)return FISH[i];
+  // check loot items
+  for(var i=0;i<LOOT.length;i++)if(LOOT[i].id===id)return LOOT[i];
+  // check crafted items
+  if(CRAFT_RESULTS[id])return {id:id,n:CRAFT_RESULTS[id].n,e:CRAFT_RESULTS[id].e,gp:CRAFT_RESULTS[id].gp,xp:0};
+  return null;
+}
+function fS(id){for(var i=0;i<SPOTS.length;i++)if(SPOTS[i].id===id)return SPOTS[i];return null;}
+function fQ(id){for(var i=0;i<QUESTS.length;i++)if(QUESTS[i].id===id)return QUESTS[i];return null;}
+function fST(id){for(var i=0;i<SHIP_TYPES.length;i++)if(SHIP_TYPES[i].id===id)return SHIP_TYPES[i];return null;}
+function fCrew(id){for(var i=0;i<CREW_POOL.length;i++)if(CREW_POOL[i].id===id)return CREW_POOL[i];return null;}
+function fRoute(id){for(var i=0;i<ROUTES.length;i++)if(ROUTES[i].id===id)return ROUTES[i];return null;}
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return''+Math.floor(n);}
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+// ══════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════
+function init(){
+  makeStars();
+  buildInv();
+  buildSpotBtns();
+  buildTrader();
+  renderSpots();
+  buildQuestList();
+  buildPortUI();
+  updateUI();
+  setupTabs();
+  log('Welcome to Saltmere! Click a fishing spot to begin.','lhi');
+  log('Visit the Quest tab to meet the locals.','lq');
+  // auto-start fishing at shallows
+  setTimeout(function(){startFishing();},100);
+  // frenzy spot movement
+  setInterval(moveFrenzySpot, 3500);
+  // voyage tick
+  setInterval(voyageTick, 1000);
+  setInterval(function(){buildBoostsPanel();},5000);
+}
+
+function makeStars(){
+  var bg=document.getElementById('bg');
+  for(var i=0;i<90;i++){
+    var s=document.createElement('div');s.className='bg-star';
+    var sz=Math.random()*2+.5;
+    s.style.cssText='width:'+sz+'px;height:'+sz+'px;top:'+(Math.random()*50)+'%;left:'+(Math.random()*100)+'%;--dur:'+(2+Math.random()*3)+'s;--op:'+(Math.random()*.8+.2)+';animation-delay:'+(Math.random()*4)+'s';
+    bg.appendChild(s);
+  }
+}
+
+// ══════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════
+function setupTabs(){
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click',function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+      document.querySelectorAll('.screen').forEach(function(x){x.classList.remove('visible');});
+      t.classList.add('active');
+      var id=t.getAttribute('data-tab')+'-screen';
+      var screen=document.getElementById(id);
+      if(screen)screen.classList.add('visible');
+      if(id==='collection-screen')buildCollectionLog();
+      if(id==='crafting-screen')buildCraftingUI();
+    });
+  });
+  document.getElementById('fishing-screen').classList.add('visible');
+}
+
+// ══════════════════════════════════════════
+// FISHING
+// ══════════════════════════════════════════
+function renderSpots(){
+  var wrap=document.getElementById('spots-wrap');wrap.innerHTML='';
+  SPOTS.forEach(function(sp){
+    var el=document.createElement('div');
+    var cls='fspot';
+    if(sp.lvl>S.level)cls+=' sp-locked';
+    if(sp.id===S.spot&&S.fishing)cls+=' sp-active';
+    if(sp.frenzy)cls+=' sp-frenzy';
+    el.className=cls;el.id='sp-'+sp.id;
+    el.textContent=sp.e;el.title=sp.n+' (Lv '+sp.lvl+')';
+    el.style.left=sp.px+'%';el.style.top=sp.py+'%';
+    if(sp.lvl<=S.level)el.onclick=function(){selectSpot(sp.id);};
+    wrap.appendChild(el);
+  });
+}
+
+function buildSpotBtns(){
+  var row=document.getElementById('spot-btns-row2');row.innerHTML='';
+  SPOTS.forEach(function(sp){
+    var b=document.createElement('div');
+    var locked=sp.lvl>S.level;
+    b.className='sbtn'+(locked?' sbtn-lock':'')+(sp.id===S.spot?' sbtn-sel':'');
+    b.innerHTML='<span class="si">'+sp.e+'</span>'+sp.n+'<span class="sq">Lv '+sp.lvl+'</span>';
+    if(!locked)b.onclick=function(){selectSpot(sp.id);};
+    row.appendChild(b);
+  });
+}
+
+function selectSpot(id){
+  var sp=fS(id);if(!sp||sp.lvl>S.level)return;
+  if(S.fishing)stopFishing();
+  S.spot=id;buildSpotBtns();renderSpots();startFishing();
+}
+
+function startFishing(){
+  if(S.fishing)return;
+  var sp=fS(S.spot);if(!sp||sp.lvl>S.level)return;
+  if(!sp.frenzy&&invCount()>=28){log('Inventory full!','lhi');return;}
+  S.fishing=true;
+  document.getElementById('find').style.display='block';
+  document.getElementById('stop-btn').disabled=false;
+  drawLine();renderSpots();buildSpotBtns();schedCatch();
+}
+
+function stopFishing(){
+  S.fishing=false;if(S.timer)clearTimeout(S.timer);
+  document.getElementById('find').style.display='none';
+  document.getElementById('stop-btn').disabled=true;
+  clearLine();renderSpots();buildSpotBtns();
+  if(S.spot==='frenzy'){S.streak=Math.floor(S.streak/2);updateStreakUI();}
+}
+
+function schedCatch(){
+  if(!S.fishing)return;
+  var sp=fS(S.spot);if(!sp)return;
+  var delay=sp.frenzy?700:1800;
+  if(!sp.frenzy){
+    var opts=catchable(sp);
+    if(opts.length>0){var fd=fF(opts[rand(0,opts.length-1)]);if(fd)delay=fd.t;}
+  }
+  delay=Math.max(500,Math.floor(delay*(1+S.rodTimeMod/100))-S.level*4);
+  S.timer=setTimeout(doCatch,delay);
+}
+
+function doCatch(){
+  if(!S.fishing)return;
+  var sp=fS(S.spot);if(!sp)return;
+  if(sp.frenzy){
+    var bx=8+S.level*2;
+    var mult=1+(S.bonusPct+S.streakBonus)/100;
+    var xg=Math.floor(bx*mult);
+    addXP(xg);
+    S.streak=Math.min(S.streak+1,200);
+    S.streakBonus=Math.min(Math.floor(S.streak/10),20);
+    updateStreakUI();
+    showPop('+'+xg+' XP','pxp');
+    log('Frenzy! +'+xg+' XP (streak '+S.streak+')','lct');
+  }else{
+    if(invCount()>=28){log('Inventory full! Stopped.','lhi');stopFishing();return;}
+    var opts=catchable(sp);
+    if(opts.length===0){schedCatch();return;}
+    var fid=opts[rand(0,opts.length-1)];
+    var fd=fF(fid);if(!fd){schedCatch();return;}
+    addInv(fd.id,1);S.caught++;
+    // collection log
+    if(!S.collectionLog[fd.id])S.collectionLog[fd.id]={count:0,firstCaught:Date.now()};
+    S.collectionLog[fd.id].count++;
+    var xpBonus=1+(S.bonusPct+S.rodXpMod)/100;
+    var xg=Math.floor(fd.xp*xpBonus);
+    addXP(xg);
+    var em=FISH_EMO[fd.id]||'?';
+    showPop(em+' '+fd.n,'');showPop('+'+xg+' XP','pxp');
+    var msg=em+' Caught '+fd.n+' (+'+xg+' XP)';
+    // loot roll
+    var lootRollChance=8+S.rodLootMod; // base 8% per catch
+    if(Math.random()*100<lootRollChance){
+      var loot=rollLoot();
+      if(loot&&invCount()<28){
+        addInv(loot.id,1);
+        if(!S.lootLog[loot.id])S.lootLog[loot.id]={count:0,firstFound:Date.now()};
+        S.lootLog[loot.id].count++;
+        updateQuestLoot(loot.id);
+        if(loot.cat==='legendary'){
+          showPop('LEGENDARY! '+loot.e+' '+loot.n,'');
+          log('LEGENDARY FIND! '+loot.e+' '+loot.n+' ('+loot.gp+' gp)','llv');
+        }else if(loot.cat==='rare'){
+          showPop(loot.e+' '+loot.n,'');
+          log('Rare find: '+loot.e+' '+loot.n+' ('+loot.gp+' gp)','lhi');
+        }else{
+          msg+=' + '+loot.e+' '+loot.n;
+        }
+      }
+    }
+    log(msg,'lct');
+    updateQuestCatch(fd.id);
+  }
+  updateUI();schedCatch();
+}
+
+function rollLoot(){
+  var totalW=0;
+  LOOT.forEach(function(l){totalW+=l.w;});
+  var r=Math.random()*totalW;
+  var cum=0;
+  for(var i=0;i<LOOT.length;i++){
+    cum+=LOOT[i].w;
+    if(r<=cum)return LOOT[i];
+  }
+  return LOOT[0];
+}
+
+function catchable(sp){
+  var r=[];
+  sp.fish.forEach(function(id){var fd=fF(id);if(fd&&S.level>=fd.lvl&&!fd.rare)r.push(id);});
+  return r;
+}
+
+// ══════════════════════════════════════════
+// XP / LEVELING
+// ══════════════════════════════════════════
+function addXP(amt){
+  var old=S.level;S.xp+=amt;S.level=lvlFromXp(S.xp);
+  if(S.level>old){doLevelUp(S.level);buildSpotBtns();renderSpots();buildTrader();buildPortUI();}
+}
+
+function doLevelUp(lvl){
+  document.getElementById('lu-n').textContent=lvl;
+  var ul=[];
+  FISH.forEach(function(f){if(f.lvl===lvl&&!f.rare)ul.push(f.n);});
+  SPOTS.forEach(function(s){if(s.lvl===lvl)ul.push(s.n+' area');});
+  document.getElementById('lu-msg').textContent=ul.length?'Unlocked: '+ul.join(', '):'Keep going, sailor!';
+  document.getElementById('lvlup').classList.add('show');
+  log('LEVEL UP! Now level '+lvl+'!','llv');
+  checkQuestAvailability();
+}
+
+function closeLU(){document.getElementById('lvlup').classList.remove('show');}
+
+// ══════════════════════════════════════════
+// INVENTORY
+// ══════════════════════════════════════════
+function addInv(id,n){
+  for(var i=0;i<S.inv.length;i++){if(S.inv[i].id===id){S.inv[i].count+=n;renderInv();return;}}
+  S.inv.push({id:id,count:n});renderInv();
+}
+function invCount(){var t=0;S.inv.forEach(function(i){t+=i.count;});return t;}
+
+function buildInv(){
+  var g=document.getElementById('inv-grid');g.innerHTML='';
+  for(var i=0;i<28;i++){
+    var sl=document.createElement('div');sl.className='isl';sl.id='isl-'+i;
+    (function(idx){
+      sl.onmouseenter=function(e){showTT(e,idx);};
+      sl.onmouseleave=hideTT;
+    })(i);
+    g.appendChild(sl);
+  }
+  renderInv();
+}
+
+function renderInv(){
+  for(var i=0;i<28;i++){
+    var sl=document.getElementById('isl-'+i);if(!sl)continue;
+    if(i<S.inv.length){
+      var it=S.inv[i];var em=FISH_EMO[it.id]||'?';
+      sl.innerHTML=em+'<span class="ic">'+it.count+'</span>';
+    }else{sl.innerHTML='';}
+  }
+}
+
+function showTT(e,idx){
+  if(idx>=S.inv.length)return;
+  var it=S.inv[idx];var fd=fF(it.id);if(!fd)return;
+  var tt=document.getElementById('tt');
+  document.getElementById('tt-name').textContent=(FISH_EMO[fd.id]||'')+' '+fd.n;
+  document.getElementById('tt-cnt').textContent=it.count;
+  document.getElementById('tt-val').textContent=fd.gp+' gp';
+  document.getElementById('tt-tot').textContent=(it.count*fd.gp)+' gp';
+  tt.style.display='block';moveTT(e);
+}
+function hideTT(){document.getElementById('tt').style.display='none';}
+document.addEventListener('mousemove',moveTT);
+function moveTT(e){var tt=document.getElementById('tt');if(tt.style.display==='none')return;tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-8)+'px';}
+function dropAll(){S.inv=[];renderInv();log('Dropped all fish.','');updateUI();}
+function sellAll(){
+  if(!S.inv.length){log('Nothing to sell.','');return;}
+  var total=0;S.inv.forEach(function(i){var fd=fF(i.id);if(fd)total+=fd.gp*i.count;});
+  S.gold+=total;S.inv=[];renderInv();
+  log('Sold all fish for '+total+' gp!','lsl');updateUI();buildTrader();
+}
+
+// ══════════════════════════════════════════
+// TRADER
+// ══════════════════════════════════════════
+function buildTrader(){
+  var c=document.getElementById('trader-body');c.innerHTML='';
+
+  // Section header: gear
+  var gh=document.createElement('div');
+  gh.style.cssText='font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:6px';
+  gh.textContent='Fishing Gear';c.appendChild(gh);
+
+  SHOP.forEach(function(item){
+    var locked=S.level<item.lvl;
+    var poor=S.gold<item.gp;
+    var el=document.createElement('div');
+    el.className='ti'+(locked?' ti-lock':'')+(poor&&!locked?' ti-poor':'');
+    el.innerHTML='<span class="ti-ico">'+item.e+'</span><div class="ti-info"><div class="ti-n">'+item.n+'</div><div class="ti-r">Lv'+item.lvl+' - '+item.desc+'</div></div><span class="ti-p">'+item.gp+' gp</span>';
+    if(!locked)el.onclick=function(){buyItem(item.id);};
+    c.appendChild(el);
+  });
+
+  // Section: rod upgrades
+  var rh=document.createElement('div');
+  rh.style.cssText='font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);padding:8px 0 6px;border-bottom:1px solid var(--border);margin-bottom:6px;margin-top:8px';
+  rh.textContent='Rod Upgrades';c.appendChild(rh);
+
+  var currentRod=S.rod;
+  ROD_UPGRADES.forEach(function(upg){
+    var owned=S.rodUpgrades.indexOf(upg.id)>=0;
+    var rodMatch=upg.anyRod||(upg.rodReq===null)||(
+      (upg.rodReq==='rod'&&(currentRod==='Fishing Rod'||owned))||
+      (upg.rodReq==='flyrod'&&(currentRod==='Fly Rod'||owned))||
+      (upg.rodReq==='harpoon'&&(currentRod==='Harpoon'||owned))||
+      (upg.rodReq==='cage'&&(currentRod==='Lobster Cage'||owned))
+    );
+    var locked=S.level<upg.lvl||(!rodMatch&&!owned);
+    var poor=S.gold<upg.gp;
+    var el=document.createElement('div');
+    el.className='ti'+(owned?' ti-lock':'')+(locked&&!owned?' ti-lock':'')+(poor&&!locked&&!owned?' ti-poor':'');
+    el.innerHTML='<span class="ti-ico">'+upg.e+'</span><div class="ti-info"><div class="ti-n">'+upg.n+(owned?' <span style="color:var(--teal-bright);font-size:9px">OWNED</span>':'')+'</div><div class="ti-r">Lv'+upg.lvl+' - '+upg.desc+'</div></div><span class="ti-p">'+(owned?'✓':upg.gp+' gp')+'</span>';
+    if(!locked&&!owned)el.onclick=function(){buyRodUpgrade(upg.id);};
+    c.appendChild(el);
+  });
+}
+
+function buyRodUpgrade(id){
+  var upg=ROD_UPGRADES.find(function(u){return u.id===id;});
+  if(!upg)return;
+  if(S.rodUpgrades.indexOf(id)>=0){log('Already own this upgrade!','');return;}
+  if(S.level<upg.lvl){log('Need level '+upg.lvl,'lhi');return;}
+  if(S.gold<upg.gp){log('Need '+upg.gp+' gp!','lhi');return;}
+  S.gold-=upg.gp;
+  S.rodUpgrades.push(id);
+  if(upg.timeMod)S.rodTimeMod+=upg.timeMod;
+  if(upg.xpMod) S.rodXpMod+=upg.xpMod;
+  if(upg.lootMod)S.rodLootMod+=upg.lootMod;
+  log('Upgrade installed: '+upg.n+'!','lsl');
+  notify(upg.n+' installed! '+upg.desc,'Upgrade','nship');
+  updateUI();buildTrader();
+}
+
+function buyItem(id){
+  var item=SHOP.find(function(s){return s.id===id;});
+  if(!item)return;
+  if(S.level<item.lvl){log('Need level '+item.lvl,'lhi');return;}
+  if(S.gold<item.gp){log('Need '+item.gp+' gp!','lhi');return;}
+  S.gold-=item.gp;
+  if(id==='rod')     S.rod='Fishing Rod';
+  else if(id==='bait')     S.bait='Bait x50';
+  else if(id==='flyrod')   S.rod='Fly Rod';
+  else if(id==='feathers') S.bait='Feathers x50';
+  else if(id==='harpoon')  S.rod='Harpoon';
+  else if(id==='cage')     S.rod='Lobster Cage';
+  else if(id==='outfit')   {S.outfit='+5% XP';S.bonusPct=5;}
+  else if(id==='sharkout') {S.outfit='+7% XP';S.bonusPct=7;}
+  log('Bought '+item.n+' for '+item.gp+' gp','lsl');
+  updateUI();buildTrader();
+}
+
+// ══════════════════════════════════════════
+// FISHING LINE + POPUPS
+// ══════════════════════════════════════════
+function drawLine(){
+  var svg=document.getElementById('lsvg');
+  var sp=fS(S.spot);if(!sp)return;
+  var sc=document.getElementById('scene');
+  var W=sc.offsetWidth,H=sc.offsetHeight;
+  var x1=W*.5,y1=H-52,x2=W*(sp.px/100),y2=H*(sp.py/100);
+  svg.innerHTML='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(200,180,120,.55)" stroke-width="1.5" stroke-dasharray="5,4"/><circle cx="'+x2+'" cy="'+y2+'" r="5" fill="rgba(200,180,120,.7)"/>';
+}
+function clearLine(){document.getElementById('lsvg').innerHTML='';}
+
+function showPop(txt,cls){
+  var sc=document.getElementById('scene');
+  var sp=fS(S.spot);
+  var px=sp?sp.px:50,py=sp?sp.py:30;
+  var el=document.createElement('div');
+  el.className='popup '+(cls||'');el.textContent=txt;
+  el.style.left=(px+rand(-5,8))+'%';el.style.top=(py+8)+'%';
+  sc.appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},1800);
+}
+
+function moveFrenzySpot(){
+  var sp=fS('frenzy');if(!sp)return;
+  sp.px=22+Math.random()*56;sp.py=10+Math.random()*34;
+  var el=document.getElementById('sp-frenzy');
+  if(el){el.style.left=sp.px+'%';el.style.top=sp.py+'%';}
+  if(S.fishing&&S.spot==='frenzy'){
+    if(document.getElementById('lsvg'))drawLine();
+  }
+  if(S.fishing&&S.spot==='frenzy'&&S.streak>0){S.streak=Math.max(0,S.streak-1);updateStreakUI();}
+}
+
+function updateStreakUI(){
+  document.getElementById('sr-fill').style.width=(S.streak/200*100)+'%';
+  document.getElementById('sr-cnt').textContent=S.streak+'/200';
+  document.getElementById('eq-bon').textContent='+'+(S.bonusPct+S.streakBonus)+'%';
+}
+
+// ══════════════════════════════════════════
+// QUEST SYSTEM
+// ══════════════════════════════════════════
+function buildQuestList(){
+  var list=document.getElementById('quest-list');list.innerHTML='';
+  QUESTS.forEach(function(q){
+    var qs=S.questStates[q.id];
+    var el=document.createElement('div');
+    el.className='qitem'+(qs.status==='complete'?' qi-done':'')+(qs.status==='locked'?' qi-locked':'')+(S.selectedQuest===q.id?' qi-sel':'');
+    var badgeCls=qs.status==='complete'?'done':qs.status==='active'?'active':'locked';
+    var badgeTxt=qs.status==='complete'?'Done':qs.status==='active'?'Active':qs.status==='available'?'Available':'Locked';
+    el.innerHTML='<div class="qi-name">'+q.n+'</div><div class="qi-sub">'+q.giver+'</div><span class="qi-badge '+badgeCls+'">'+badgeTxt+'</span>';
+    if(qs.status!=='locked'){
+      el.onclick=function(){selectQuest(q.id);};
+    }
+    list.appendChild(el);
+  });
+}
+
+function selectQuest(id){
+  S.selectedQuest=id;
+  buildQuestList();
+  renderQuestInfo(id);
+}
+
+function renderQuestInfo(id){
+  var q=fQ(id);if(!q)return;
+  var qs=S.questStates[id];
+  var info=document.getElementById('quest-info');
+  var dlgBox=document.getElementById('dialogue-box');
+
+  // objectives progress
+  var objHtml='';
+  q.objectives.forEach(function(obj,i){
+    var prog=qs.progress[i]||0;
+    var done=prog>=obj.qty;
+    objHtml+='<div class="qi-obj'+(done?' done':'')+'">'+obj.txt+' ('+Math.min(prog,obj.qty)+'/'+obj.qty+')</div>';
+  });
+
+  info.innerHTML='<div class="qi-title">'+q.n+'</div><div class="qi-giver">Quest Giver: '+q.giver+'</div><div class="qi-desc">'+q.desc+'</div><div class="qi-objectives"><div class="qi-obj-title">Objectives</div>'+objHtml+'</div><div class="qi-rewards"><div class="qi-obj-title" style="margin-bottom:6px">Rewards</div>'+q.rewardText.split(',').map(function(r){return'<span class="qi-rew">'+r.trim()+'</span>';}).join('')+'</div>';
+
+  // show dialogue if available or active
+  if(qs.status==='available'){
+    dlgBox.style.display='';
+    showDialogueStage(q, qs.stageIdx||0);
+  }else if(qs.status==='active'){
+    dlgBox.style.display='none';
+  }else if(qs.status==='complete'){
+    dlgBox.style.display='';
+    showCompleteDlg(q);
+  }else{
+    dlgBox.style.display='none';
+  }
+}
+
+function showDialogueStage(q, stageIdx){
+  var stage=q.stages[stageIdx];if(!stage)return;
+  document.getElementById('dlg-avatar').textContent=q.avatar;
+  document.getElementById('dlg-npc').textContent=q.giver;
+  document.getElementById('dlg-role').textContent=q.role;
+  document.getElementById('dlg-text').textContent=stage.dlg;
+  var choicesEl=document.getElementById('dlg-choices');choicesEl.innerHTML='';
+  stage.choices.forEach(function(ch){
+    var b=document.createElement('button');b.className='dlg-choice';b.textContent=ch.txt;
+    if(ch.next==='accept'){
+      b.onclick=function(){acceptQuest(q.id);};
+    }else if(typeof ch.next==='number'){
+      b.onclick=function(){showDialogueStage(q,ch.next);};
+    }
+    choicesEl.appendChild(b);
+  });
+}
+
+function showCompleteDlg(q){
+  var dlg=q.completeDlg;
+  document.getElementById('dlg-avatar').textContent=q.avatar;
+  document.getElementById('dlg-npc').textContent=q.giver;
+  document.getElementById('dlg-role').textContent=q.role;
+  document.getElementById('dlg-text').textContent=dlg.dlg;
+  var choicesEl=document.getElementById('dlg-choices');choicesEl.innerHTML='';
+  var b=document.createElement('button');b.className='dlg-choice';b.textContent='(Quest complete — '+q.rewardText+')';
+  b.onclick=function(){};
+  choicesEl.appendChild(b);
+}
+
+function acceptQuest(id){
+  var q=fQ(id);var qs=S.questStates[id];
+  if(qs.status!=='available')return;
+  if(S.level<q.lvlReq){notify('Level '+q.lvlReq+' required for this quest!','Quest','nquest');return;}
+  if(q.shipReq&&S.fleet.length<q.shipReq){notify('You need '+q.shipReq+' ship(s) for this quest!','Quest','nquest');return;}
+  qs.status='active';
+  qs.progress={};
+  q.objectives.forEach(function(_,i){qs.progress[i]=0;});
+  log('Quest accepted: '+q.n,'lq');
+  notify('Quest accepted: '+q.n,'Quest','nquest');
+  buildQuestList();renderQuestInfo(id);
+  // check if already complete (0-qty objectives)
+  checkQuestComplete(id);
+}
+
+function updateQuestCatch(fishId){
+  QUESTS.forEach(function(q){
+    var qs=S.questStates[q.id];
+    if(qs.status!=='active')return;
+    q.objectives.forEach(function(obj,i){
+      if(obj.type==='catch'&&obj.fish===fishId){
+        qs.progress[i]=(qs.progress[i]||0)+1;
+        checkQuestComplete(q.id);
+        if(S.selectedQuest===q.id)renderQuestInfo(q.id);
+      }
+    });
+  });
+}
+
+function updateQuestLoot(lootId){
+  QUESTS.forEach(function(q){
+    var qs=S.questStates[q.id];
+    if(qs.status!=='active')return;
+    q.objectives.forEach(function(obj,i){
+      if(obj.type==='loot'&&obj.item===lootId){
+        qs.progress[i]=(qs.progress[i]||0)+1;
+        checkQuestComplete(q.id);
+        if(S.selectedQuest===q.id)renderQuestInfo(q.id);
+      }
+    });
+  });
+}
+
+function updateQuestCraft(itemId){
+  QUESTS.forEach(function(q){
+    var qs=S.questStates[q.id];
+    if(qs.status!=='active')return;
+    q.objectives.forEach(function(obj,i){
+      if(obj.type==='craft'&&obj.item===itemId){
+        qs.progress[i]=(qs.progress[i]||0)+1;
+        checkQuestComplete(q.id);
+        if(S.selectedQuest===q.id)renderQuestInfo(q.id);
+      }
+    });
+  });
+}
+
+function updateQuestVoyage(routeId, shipId){
+  QUESTS.forEach(function(q){
+    var qs=S.questStates[q.id];
+    if(qs.status!=='active')return;
+    q.objectives.forEach(function(obj,i){
+      if(obj.type==='voyage'&&obj.route===routeId){
+        if(!obj.ship||shipId===obj.ship){
+          qs.progress[i]=(qs.progress[i]||0)+1;
+          checkQuestComplete(q.id);
+          if(S.selectedQuest===q.id)renderQuestInfo(q.id);
+        }
+      }
+    });
+  });
+}
+
+function updateQuestShipCargo(itemId){
+  QUESTS.forEach(function(q){
+    var qs=S.questStates[q.id];
+    if(qs.status!=='active')return;
+    q.objectives.forEach(function(obj,i){
+      if(obj.type==='shipCargo'&&obj.item===itemId){
+        qs.progress[i]=(qs.progress[i]||0)+1;
+        checkQuestComplete(q.id);
+        if(S.selectedQuest===q.id)renderQuestInfo(q.id);
+      }
+    });
+  });
+}
+
+function checkQuestComplete(id){
+  var q=fQ(id);var qs=S.questStates[id];
+  if(qs.status!=='active')return;
+  var done=true;
+  q.objectives.forEach(function(obj,i){
+    if((qs.progress[i]||0)<obj.qty)done=false;
+  });
+  if(done){
+    completeQuest(id);
+  }
+}
+
+function completeQuest(id){
+  var q=fQ(id);var qs=S.questStates[id];
+  qs.status='complete';
+  // give rewards
+  if(q.rewards.xp)addXP(q.rewards.xp);
+  if(q.rewards.gold){S.gold+=q.rewards.gold;}
+  if(q.rewards.item){
+    // give shop item
+    buyItemFree(q.rewards.item);
+  }
+  if(q.rewards.unlocksCrew){
+    if(S.unlockedCrew.indexOf(q.rewards.unlocksCrew)<0)S.unlockedCrew.push(q.rewards.unlocksCrew);
+  }
+  if(q.rewards.unlocksShip){
+    if(S.unlockedShips.indexOf(q.rewards.unlocksShip)<0)S.unlockedShips.push(q.rewards.unlocksShip);
+  }
+  if(q.rewards.unlocksRoute){
+    if(S.unlockedRoutes.indexOf(q.rewards.unlocksRoute)<0)S.unlockedRoutes.push(q.rewards.unlocksRoute);
+  }
+  if(q.rewards.questItem){S.questItems.push(q.rewards.questItem);}
+  if(q.rewards.craftUnlock){
+    var rec=RECIPES.find(function(r){return r.id===q.rewards.craftUnlock;});
+    if(rec){rec.unlocked=true;S.unlockedRecipes.push(rec.id);}
+    log('New recipe unlocked: '+q.rewards.craftUnlock,'lq');
+  }
+  log('QUEST COMPLETE: '+q.n+'!','lq');
+  notify('Quest Complete: '+q.n,'Quest','nquest');
+  updateUI();buildTrader();buildPortUI();
+  // unlock next quests
+  checkQuestAvailability();
+  buildQuestList();
+  if(S.selectedQuest===id)renderQuestInfo(id);
+}
+
+function buyItemFree(itemId){
+  if(itemId==='rod')S.rod='Fishing Rod';
+}
+
+function checkQuestAvailability(){
+  QUESTS.forEach(function(q){
+    var qs=S.questStates[q.id];
+    if(qs.status==='locked'){
+      var prevOk=!q.prevQuest||(S.questStates[q.prevQuest]&&S.questStates[q.prevQuest].status==='complete');
+      var lvlOk=S.level>=q.lvlReq;
+      if(prevOk&&lvlOk){qs.status='available';log('New quest available: '+q.n,'lq');}
+    }
+  });
+  buildQuestList();
+}
+
+// ══════════════════════════════════════════
+// PORT SYSTEM
+// ══════════════════════════════════════════
+var selectedShipIdx=null;
+var selectedRoute=null;
+var selectedCrew=[];
+
+function buildPortUI(){
+  buildFleetList();
+  buildShipMarket();
+  buildCrewMarket();
+  buildActiveVoyages();
+  buildCargoReturns();
+  buildVoyagePlanner();
+}
+
+function buildFleetList(){
+  var el=document.getElementById('fleet-list');el.innerHTML='';
+  if(!S.fleet.length){el.innerHTML='<div style="font-size:11px;color:var(--text-dim)">No ships yet. Buy one below!</div>';return;}
+  S.fleet.forEach(function(ship,idx){
+    var st=fST(ship.typeId);if(!st)return;
+    var statusCls=ship.status==='port'?'at-port':ship.status==='returning'?'returning':'at-sea';
+    var statusTxt=ship.status==='port'?'At Port':ship.status==='returning'?'Returning':'At Sea';
+    var card=document.createElement('div');
+    card.className='ship-card'+(ship.status!=='port'?' sc-sea':'')+(selectedShipIdx===idx?' sc-sel':'');
+    card.innerHTML='<span class="sc-status '+statusCls+'">'+statusTxt+'</span><div class="sc-name">'+ship.name+'</div><div class="sc-type">'+st.n+'</div><div class="sc-stats"><div class="sc-stat">Cargo: <span>'+st.cargo+'</span></div><div class="sc-stat">Speed: <span>'+st.speed+'x</span></div><div class="sc-stat">Hull: <span>'+st.survivalBase+'%</span></div><div class="sc-stat">Crew: <span>'+ship.crewIds.length+'/'+st.crewSlots+'</span></div></div>';
+    if(ship.status==='port'){
+      card.onclick=function(){selectedShipIdx=idx;selectedRoute=null;selectedCrew=[];buildFleetList();buildVoyagePlanner();};
+    }
+    el.appendChild(card);
+  });
+}
+
+function buildShipMarket(){
+  var el=document.getElementById('ship-market');el.innerHTML='';
+  SHIP_TYPES.forEach(function(st){
+    var unlocked=S.unlockedShips.indexOf(st.id)>=0;
+    if(!unlocked)return;
+    var poor=S.gold<st.gp;
+    var card=document.createElement('div');
+    card.className='ship-card'+(poor?' sc-buy':'');
+    card.style.cursor='pointer';
+    card.innerHTML='<div class="sc-name">'+st.e+' '+st.n+'</div><div class="sc-type">'+st.desc+'</div><div class="sc-stats"><div class="sc-stat">Cargo: <span>'+st.cargo+'</span></div><div class="sc-stat">Crew: <span>'+st.crewSlots+' slots</span></div><div class="sc-stat">Survival: <span>'+st.survivalBase+'%</span></div><div class="sc-stat">Cost: <span style="color:'+(poor?'var(--red)':'var(--gold)')+'">'+fmt(st.gp)+' gp</span></div></div>';
+    card.onclick=(function(shipType,isPoor){
+      return function(){
+        if(isPoor){log('Need '+fmt(shipType.gp)+' gp to buy '+shipType.n+'!','lhi');}
+        else{buyShip(shipType.id);}
+      };
+    })(st,poor);
+    el.appendChild(card);
+  });
+}
+
+function buyShip(typeId){
+  var st=fST(typeId);if(!st)return;
+  if(S.gold<st.gp){log('Not enough gold!','lhi');return;}
+  S.gold-=st.gp;
+  var name=st.n+' #'+(S.fleet.length+1);
+  S.fleet.push({typeId:typeId,name:name,crewIds:[],status:'port',voyageData:null});
+  log('Purchased '+name+'!','lsl');
+  notify(name+' added to your fleet!','Port','nship');
+  updateUI();buildPortUI();
+}
+
+function buildCrewMarket(){
+  var el=document.getElementById('crew-market');el.innerHTML='';
+  CREW_POOL.forEach(function(c){
+    if(S.unlockedCrew.indexOf(c.id)<0)return;
+    var hired=S.hiredCrew.indexOf(c.id)>=0;
+    var poor=S.gold<c.gp;
+    var div=document.createElement('div');
+    div.className='crew-slot'+(hired?' cs-sel':'');
+    div.innerHTML='<span class="cs-icon">'+c.e+'</span><div class="cs-info"><div class="cs-name">'+c.n+'</div><div class="cs-role">'+c.role+'</div><div class="cs-stats">'+c.bonus+'</div></div><span class="cs-cost">'+(hired?'Hired':c.gp===0?'Free':c.gp+' gp')+'</span>';
+    if(!hired){
+      if(!poor||c.gp===0){
+        div.onclick=function(){hireCrew(c.id);};
+        div.style.cursor='pointer';
+      }
+    }
+    el.appendChild(div);
+  });
+}
+
+function hireCrew(id){
+  var c=fCrew(id);if(!c)return;
+  if(S.hiredCrew.indexOf(id)>=0){log(c.n+' already hired!','');return;}
+  if(c.gp>0&&S.gold<c.gp){log('Not enough gold!','lhi');return;}
+  if(c.gp>0)S.gold-=c.gp;
+  S.hiredCrew.push(id);
+  log('Hired '+c.n+'!','lsl');
+  updateUI();buildPortUI();
+}
+
+function buildVoyagePlanner(){
+  var el=document.getElementById('voyage-planner');el.innerHTML='';
+  if(selectedShipIdx===null||!S.fleet[selectedShipIdx]){
+    el.innerHTML='<div style="font-size:11px;color:var(--text-dim);padding:10px">Select a ship at port to plan a voyage.</div>';
+    return;
+  }
+  var ship=S.fleet[selectedShipIdx];
+  var st=fST(ship.typeId);
+
+  // Ship header
+  el.innerHTML='<div style="font-size:13px;color:var(--gold);margin-bottom:10px">'+st.e+' '+ship.name+'</div>';
+
+  // Route selection
+  var rsec=document.createElement('div');rsec.className='vp-section';
+  rsec.innerHTML='<div class="vp-title">Select Route</div>';
+  ROUTES.forEach(function(r){
+    var locked=S.unlockedRoutes.indexOf(r.id)<0||S.level<r.lvlReq;
+    var rb=document.createElement('button');
+    rb.className='route-btn'+(locked?' rb-lock':'')+(selectedRoute===r.id?' rb-sel':'');
+    rb.innerHTML='<div class="rb-name">'+r.e+' '+r.n+'</div><div class="rb-info">'+r.desc+' &nbsp; Risk: <span>'+r.risk+'%</span></div>';
+    if(!locked)rb.onclick=function(){selectedRoute=r.id;buildVoyagePlanner();};
+    rsec.appendChild(rb);
+  });
+  el.appendChild(rsec);
+
+  // Crew assignment
+  var csec=document.createElement('div');csec.className='vp-section';
+  csec.innerHTML='<div class="vp-title">Assign Crew ('+st.crewSlots+' slots)</div>';
+  S.hiredCrew.forEach(function(cid){
+    var c=fCrew(cid);if(!c)return;
+    var assigned=ship.crewIds.indexOf(cid)>=0||selectedCrew.indexOf(cid)>=0;
+    var cs=document.createElement('div');
+    cs.className='crew-slot'+(assigned?' cs-sel':'');
+    cs.innerHTML='<span class="cs-icon">'+c.e+'</span><div class="cs-info"><div class="cs-name">'+c.n+'</div><div class="cs-role">'+c.role+'</div></div>';
+    cs.onclick=function(){
+      var idx=selectedCrew.indexOf(cid);
+      if(idx>=0)selectedCrew.splice(idx,1);
+      else if(selectedCrew.length<st.crewSlots)selectedCrew.push(cid);
+      buildVoyagePlanner();
+    };
+    csec.appendChild(cs);
+  });
+  el.appendChild(csec);
+
+  // Launch button
+  var launched=ship.status!=='port';
+  var launchBtn=document.createElement('button');
+  launchBtn.className='gbn grn';
+  launchBtn.textContent=launched?'Ship is at sea':'Set Sail!';
+  launchBtn.disabled=launched||!selectedRoute;
+  launchBtn.onclick=function(){launchVoyage();};
+  el.appendChild(launchBtn);
+
+  if(!selectedRoute&&!launched){
+    var hint=document.createElement('div');hint.style.cssText='font-size:10px;color:var(--text-dim);margin-top:6px';hint.textContent='Select a route above to set sail.';
+    el.appendChild(hint);
+  }
+}
+
+function launchVoyage(){
+  if(selectedShipIdx===null)return;
+  var ship=S.fleet[selectedShipIdx];
+  if(ship.status!=='port')return;
+  if(!selectedRoute)return;
+  var route=fRoute(selectedRoute);if(!route)return;
+  var st=fST(ship.typeId);
+
+  // calculate survival
+  var surv=st.survivalBase;
+  var speedMult=st.speed;
+  var goldBonus=0;
+  var extraCargo=0;
+  selectedCrew.forEach(function(cid){
+    var c=fCrew(cid);if(!c)return;
+    surv+=c.survBonus||0;
+    speedMult+=(c.spdBonus||0);
+    goldBonus+=(c.goldBonus||0);
+    extraCargo+=(c.cargoBonus||0);
+    if(c.riskMod)surv-=c.riskMod; // riskMod reduces risk = increases survival
+  });
+  surv=Math.min(95,surv);
+  var adjustedRisk=Math.max(5,route.risk-Math.max(0,surv-route.risk));
+  var dur=Math.max(15000,route.dur*1000/speedMult);
+
+  ship.status='sea';
+  ship.crewIds=selectedCrew.slice();
+  ship.voyageData={
+    routeId:selectedRoute,
+    startTime:Date.now(),
+    dur:dur,
+    surv:surv,
+    risk:adjustedRisk,
+    goldBonus:goldBonus,
+    extraCargo:extraCargo,
+    event:null,
+    eventTime:Date.now()+dur*0.4+rand(0,dur*0.2),
+  };
+
+  log('Sent '+ship.name+' to '+route.n+'!','lsl');
+  notify(ship.name+' sets sail for '+route.n+'!','Port','nship');
+  selectedShipIdx=null;selectedRoute=null;selectedCrew=[];
+  updateUI();buildPortUI();
+  // update voyage quests
+  updateQuestVoyage(selectedRoute, ship.typeId);
+}
+
+function voyageTick(){
+  var now=Date.now();
+  var changed=false;
+  S.fleet.forEach(function(ship,idx){
+    if(ship.status!=='sea'||!ship.voyageData)return;
+    var vd=ship.voyageData;
+    var elapsed=now-vd.startTime;
+    var prog=Math.min(1,elapsed/vd.dur);
+
+    // random event midway
+    if(!vd.event&&now>=vd.eventTime){
+      vd.event=generateEvent(ship,vd);
+    }
+
+    if(prog>=1){
+      // voyage complete
+      finishVoyage(ship,idx,vd);
+      changed=true;
+    }
+  });
+  if(changed){buildPortUI();updateUI();}
+  buildActiveVoyages(); // update progress bars
+}
+
+function generateEvent(ship,vd){
+  var roll=Math.random()*100;
+  if(roll<vd.risk*0.4){return {type:'storm',txt:'Caught in a storm! Crew fighting hard...',goldMod:-20};}
+  if(roll<vd.risk*0.6){return {type:'monster',txt:'Sea creature spotted! Changed course.',timeMod:1.15};}
+  if(roll<vd.risk*0.8){return {type:'treasure',txt:'Spotted wreckage! Found extra cargo!',extraItem:true};}
+  return {type:'calm',txt:'Smooth sailing all the way.'};
+}
+
+function finishVoyage(ship,idx,vd){
+  var route=fRoute(vd.routeId);if(!route)return;
+  var st=fST(ship.typeId);
+
+  // survival check
+  var survived=Math.random()*100 < vd.surv;
+  ship.status='port';
+  ship.voyageData=null;
+  ship.crewIds=[];
+  S.completedVoyages++;
+
+  if(!survived){
+    log(ship.name+' was lost at sea! Voyage to '+route.n+' failed.','lhi');
+    notify(ship.name+' lost at sea!','Port','nship');
+    return;
+  }
+
+  // generate cargo
+  var cargo=[];
+  var cargoCount=st.cargo+vd.extraCargo;
+  var goldGain=rand(route.gold[0],route.gold[1]);
+  if(vd.goldBonus)goldGain=Math.floor(goldGain*(1+vd.goldBonus/100));
+
+  for(var i=0;i<cargoCount;i++){
+    var itemId=pick(route.cargo);
+    cargo.push(itemId);
+  }
+
+  // rare chance
+  if(Math.random()<0.1){
+    cargo.push(pick(['kraken_beak','deepangel','ghost_eel']));
+  }
+
+  S.pendingCargo.push({shipName:ship.name,route:route.n,gold:goldGain,items:cargo,time:Date.now()});
+  S.gold+=goldGain;
+  log(ship.name+' returned from '+route.n+'! Earned '+goldGain+' gp.','lsl');
+  notify(ship.name+' returned! '+goldGain+' gp earned.','Port','nship');
+
+  // check quest cargo
+  cargo.forEach(function(item){updateQuestShipCargo(item);});
+  updateQuestVoyage(vd.routeId, ship.typeId);
+  updateUI();
+}
+
+function buildActiveVoyages(){
+  var el=document.getElementById('active-voyages');if(!el)return;el.innerHTML='';
+  var active=S.fleet.filter(function(s){return s.status==='sea'&&s.voyageData;});
+  if(!active.length){el.innerHTML='<div style="font-size:11px;color:var(--text-dim)">No active voyages.</div>';return;}
+  active.forEach(function(ship){
+    var vd=ship.voyageData;var route=fRoute(vd.routeId);
+    var elapsed=Date.now()-vd.startTime;
+    var prog=Math.min(100,elapsed/vd.dur*100);
+    var remaining=Math.max(0,(vd.dur-elapsed)/1000);
+    var mins=Math.floor(remaining/60);var secs=Math.floor(remaining%60);
+    var eta=mins>0?mins+'m '+secs+'s':secs+'s';
+    var card=document.createElement('div');card.className='voyage-card';
+    var crewNames=ship.crewIds.map(function(cid){var c=fCrew(cid);return c?c.n:'?';}).join(', ')||'No crew';
+    card.innerHTML='<div class="vc-header"><span class="vc-ship">'+ship.name+'</span><span class="vc-eta">ETA: '+eta+'</span></div><div class="vc-route">'+(route?route.e+' '+route.n:'Unknown')+'</div><div class="vc-progress"><div class="vc-prog-fill" style="width:'+prog+'%"></div></div><div class="vc-crew">Crew: '+crewNames+'</div>'+(vd.event?'<div class="vc-event">'+vd.event.txt+'</div>':'');
+    el.appendChild(card);
+  });
+}
+
+function buildCargoReturns(){
+  var el=document.getElementById('cargo-returns');el.innerHTML='';
+  if(!S.pendingCargo.length){el.innerHTML='<div style="font-size:11px;color:var(--text-dim)">No cargo to collect.</div>';return;}
+  S.pendingCargo.slice(-3).reverse().forEach(function(ret){
+    var div=document.createElement('div');
+    div.style.marginBottom='8px';
+    div.innerHTML='<div style="font-size:10px;color:var(--gold);margin-bottom:4px">'+ret.shipName+' - '+ret.route+'</div>';
+    // show cargo items
+    var unique={};
+    ret.items.forEach(function(id){unique[id]=(unique[id]||0)+1;});
+    Object.keys(unique).forEach(function(id){
+      var fd=fF(id);var ci=CARGO_ITEMS[id];
+      var n=fd?fd.n:ci?ci.n:id;var e=fd?(FISH_EMO[id]||'?'):ci?ci.e:'?';
+      var item=document.createElement('div');item.className='cargo-item';
+      item.innerHTML='<span class="ci-ico">'+e+'</span><span class="ci-name">'+n+'</span><span class="ci-qty">x'+unique[id]+'</span>';
+      div.appendChild(item);
+    });
+    el.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════
+function notify(msg,title,cls){
+  var box=document.getElementById('notif');
+  var c=document.createElement('div');c.className='notif-card '+(cls||'');
+  c.innerHTML='<div class="nt">'+(title||'')+'</div>'+msg;
+  box.appendChild(c);
+  setTimeout(function(){if(c.parentNode)c.parentNode.removeChild(c);},4000);
+}
+
+// ══════════════════════════════════════════
+// LOG
+// ══════════════════════════════════════════
+function log(msg,cls){
+  var body=document.getElementById('log-body');
+  var el=document.createElement('div');el.className='le '+(cls||'');el.textContent=msg;
+  body.insertBefore(el,body.firstChild);
+  while(body.children.length>80)body.removeChild(body.lastChild);
+}
+
+// ══════════════════════════════════════════
+// UI
+// ══════════════════════════════════════════
+function updateUI(){
+  var lvl=S.level;
+  document.getElementById('lvl-n').textContent=lvl;
+  document.getElementById('h-lvl').textContent=lvl;
+  document.getElementById('h-xp').textContent=fmt(S.xp);
+  document.getElementById('h-gld').textContent=fmt(S.gold);
+  document.getElementById('h-ct').textContent=fmt(S.caught);
+  document.getElementById('h-ships').textContent=S.fleet.length;
+  document.getElementById('xp-tot').textContent=fmt(S.xp)+' XP';
+  document.getElementById('inv-gld').textContent=fmt(S.gold)+' gp';
+  document.getElementById('eq-rod').textContent=S.rod;
+  document.getElementById('eq-bait').textContent=S.bait;
+  document.getElementById('eq-out').textContent=S.outfit;
+  document.getElementById('eq-bon').textContent='+'+(S.bonusPct+S.streakBonus)+'%';
+  if(lvl<99){
+    var cur=XP[lvl],nxt=XP[lvl+1],got=S.xp-cur,diff=nxt-cur;
+    document.getElementById('xp-nxt').textContent='Next: '+fmt(nxt)+' XP';
+    document.getElementById('xpbar').style.width=(got/diff*100).toFixed(1)+'%';
+    document.getElementById('xp-lbl').textContent=fmt(got)+'/'+fmt(diff)+' to next level';
+  }else{
+    document.getElementById('xp-nxt').textContent='MAX LEVEL!';
+    document.getElementById('xpbar').style.width='100%';
+    document.getElementById('xp-lbl').textContent='Master Fisher of Saltmere';
+  }
+}
+
+
+// ══════════════════════════════════════════
+// COLLECTION LOG
+// ══════════════════════════════════════════
+function buildCollectionLog(){
+  // Fish log
+  var fb=document.getElementById('fish-log-body');if(!fb)return;
+  fb.innerHTML='';
+  var seen=0,total=FISH.filter(function(f){return !f.rare;}).length;
+  FISH.forEach(function(f){
+    if(f.rare)return;
+    var entry=S.collectionLog[f.id];
+    var card=document.createElement('div');
+    card.className='log-entry-card'+(entry?'':' unseen');
+    var em=FISH_EMO[f.id]||'?';
+    var dt=entry?new Date(entry.firstCaught).toLocaleDateString():'Not yet caught';
+    card.innerHTML='<span class="lec-ico">'+(entry?em:'?')+'</span><div class="lec-info"><div class="lec-name">'+(entry?f.n:'???')+'<span class="lec-cat cat-'+(f.gp>=200?'rare':f.gp>=50?'uncommon':'common')+'">'+f.gp+'gp</span></div><div class="lec-sub">Lv '+f.lvl+' &nbsp;|&nbsp; '+dt+'</div></div><span class="lec-count">'+(entry?'x'+entry.count:'-')+'</span>';
+    fb.appendChild(card);
+    if(entry)seen++;
+  });
+  var fc=document.getElementById('fish-log-count');
+  if(fc)fc.textContent=seen+'/'+total+' caught';
+
+  // Loot log
+  var lb=document.getElementById('loot-log-body');if(!lb)return;
+  lb.innerHTML='';
+  var lseen=0;
+  LOOT.forEach(function(l){
+    var entry=S.lootLog[l.id];
+    var card=document.createElement('div');
+    card.className='log-entry-card'+(entry?'':' unseen');
+    var dt=entry?new Date(entry.firstFound).toLocaleDateString():'Not yet found';
+    card.innerHTML='<span class="lec-ico">'+(entry?l.e:'?')+'</span><div class="lec-info"><div class="lec-name">'+(entry?l.n:'???')+'<span class="lec-cat cat-'+l.cat+'">'+l.cat+'</span></div><div class="lec-sub">'+l.gp+' gp &nbsp;|&nbsp; '+dt+'</div></div><span class="lec-count">'+(entry?'x'+entry.count:'-')+'</span>';
+    lb.appendChild(card);
+    if(entry)lseen++;
+  });
+  var lc=document.getElementById('loot-log-count');
+  if(lc)lc.textContent=lseen+'/'+LOOT.length+' found';
+
+  // Stats panel
+  var sb=document.getElementById('stats-body');if(!sb)return;
+  var totalFishCaught=0;
+  Object.values(S.collectionLog).forEach(function(e){totalFishCaught+=e.count;});
+  var totalLoot=0;
+  Object.values(S.lootLog).forEach(function(e){totalLoot+=e.count;});
+  var lootGp=0;
+  Object.keys(S.lootLog).forEach(function(id){
+    var l=LOOT.find(function(x){return x.id===id;});
+    if(l)lootGp+=l.gp*S.lootLog[id].count;
+  });
+  var rows=[
+    ['Fishing Level',S.level],
+    ['Total XP',fmt(S.xp)],
+    ['Fish Caught',fmt(S.caught)],
+    ['Unique Fish',Object.keys(S.collectionLog).length+' / '+FISH.filter(function(f){return !f.rare;}).length],
+    ['Loot Found',fmt(totalLoot)],
+    ['Unique Loot',Object.keys(S.lootLog).length+' / '+LOOT.length],
+    ['Loot Value',fmt(lootGp)+' gp'],
+    ['Rod Upgrades',S.rodUpgrades.length+' / '+ROD_UPGRADES.length],
+    ['Time Bonus',S.rodTimeMod+'%'],
+    ['XP Bonus','+'+(S.bonusPct+S.rodXpMod+S.streakBonus)+'%'],
+    ['Loot Bonus',S.rodLootMod+'%'],
+    ['Ships Owned',S.fleet.length],
+    ['Voyages Done',S.completedVoyages],
+    ['Gold Earned',fmt(S.gold)+' gp'],
+  ];
+  sb.innerHTML=rows.map(function(r){return '<div class="stat-row"><span class="sk">'+r[0]+'</span><span class="sv">'+r[1]+'</span></div>';}).join('');
+}
+
+
+// ══════════════════════════════════════════
+// CRAFTING SYSTEM
+// ══════════════════════════════════════════
+var selectedRecipe = null;
+
+function buildCraftingUI(){
+  buildRecipeList();
+  buildBoostsPanel();
+  buildCraftedLog();
+  if(selectedRecipe) renderCraftDetail(selectedRecipe);
+}
+
+function buildRecipeList(){
+  var el=document.getElementById('recipe-list');if(!el)return;
+  el.innerHTML='';
+  var cats={fishing:[],jewelry:[],misc:[],navigation:[],quest:[]};
+  RECIPES.forEach(function(r){
+    if(!r.unlocked&&S.unlockedRecipes.indexOf(r.id)<0)return;
+    var cat=r.cat||'misc';
+    if(!cats[cat])cats[cat]=[];
+    cats[cat].push(r);
+  });
+  // Also show locked quest recipes as hints
+  RECIPES.forEach(function(r){
+    if(r.cat==='quest'&&!r.unlocked&&S.unlockedRecipes.indexOf(r.id)<0){
+      if(!cats.quest)cats.quest=[];
+      cats.quest.push({id:r.id,n:'???',e:'🔒',cat:'quest',locked:true,desc:'Unlock through quests'});
+    }
+  });
+  var catLabels={fishing:'Fishing',jewelry:'Jewelry',misc:'Misc',navigation:'Navigation',quest:'Quest Items'};
+  Object.keys(cats).forEach(function(cat){
+    if(!cats[cat]||!cats[cat].length)return;
+    var lbl=document.createElement('div');
+    lbl.style.cssText='font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);padding:8px 0 5px 2px;border-bottom:1px solid var(--border);margin-bottom:4px';
+    lbl.textContent=catLabels[cat]||cat;
+    el.appendChild(lbl);
+    cats[cat].forEach(function(r){
+      var card=document.createElement('div');
+      card.className='recipe-card'+(r.locked?' rc-locked':'')+(selectedRecipe===r.id?' rc-sel':'');
+      var badge='';
+      if(r.cat==='quest')badge='<span class="rc-badge quest">Quest</span>';
+      card.innerHTML='<span class="rc-ico">'+r.e+'</span><div><div class="rc-name">'+(r.locked?'???':r.n)+badge+'</div><div class="rc-cat">'+r.cat+'</div></div>';
+      if(!r.locked){card.onclick=function(){selectedRecipe=r.id;buildRecipeList();renderCraftDetail(r.id);};}
+      el.appendChild(card);
+    });
+  });
+}
+
+function renderCraftDetail(id){
+  var recipe=RECIPES.find(function(r){return r.id===id;});
+  if(!recipe)return;
+  var el=document.getElementById('craft-detail');if(!el)return;
+
+  // Build ingredients HTML
+  var ingHtml='';
+  recipe.ingredients.forEach(function(ing){
+    var have=invHave(ing.id);
+    var isQuestItem=S.questItems.indexOf(ing.id)>=0||ing.questItem;
+    var needed=ing.qty;
+    // quest items (like mermaid scale) with qty:0 mean auto-provided
+    if(needed===0&&isQuestItem){
+      ingHtml+='<div class="ingredient-row"><span class="ing-ico">'+(FISH_EMO[ing.id]||'?')+'</span><span class="ing-name">'+(CRAFT_RESULTS[ing.id]?CRAFT_RESULTS[ing.id].n:ing.id)+' <span style="font-size:9px;color:var(--text-dim)">(quest item)</span></span><span class="ing-have have-enough">✓</span></div>';
+    }else{
+      var ok=have>=needed;
+      ingHtml+='<div class="ingredient-row"><span class="ing-ico">'+(FISH_EMO[ing.id]||'?')+'</span><span class="ing-name">'+(getLootName(ing.id)||ing.id)+'</span><span class="ing-have '+(ok?'have-enough':'need-more')+'">'+have+'/'+needed+'</span></div>';
+    }
+  });
+
+  // Result
+  var res=CRAFT_RESULTS[recipe.result.id]||{n:recipe.result.id,e:'?',gp:recipe.result.gp||0};
+  var bonusText='';
+  if(recipe.result.rodLootBonus)bonusText+='<div style="font-size:9px;color:var(--teal-bright);margin-top:2px">+'+recipe.result.rodLootBonus+'% loot chance for '+(recipe.result.duration/60)+'min</div>';
+  if(recipe.result.rareFishBonus)bonusText+='<div style="font-size:9px;color:var(--teal-bright)">+'+recipe.result.rareFishBonus+'% rare fish chance</div>';
+
+  var canCraft=canCraftRecipe(recipe);
+  el.innerHTML='<div style="font-size:15px;color:var(--gold);margin-bottom:4px">'+recipe.e+' '+recipe.n+'</div>'
+    +'<div style="font-size:11px;color:var(--text-dim);margin-bottom:12px">'+recipe.desc+'</div>'
+    +'<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);margin-bottom:8px">Ingredients</div>'
+    +ingHtml
+    +'<div class="craft-result"><div class="cr-ico">'+res.e+'</div><div class="cr-name">'+res.n+'</div>'+(res.gp?'<div class="cr-val">Sells for '+res.gp+' gp</div>':'')+bonusText+'</div>'
+    +'<button class="gbn'+(canCraft?'':' red')+'" style="margin-top:12px;width:100%" onclick="craftItem(this.dataset.rid)" data-rid="'+id+'">'+(canCraft?'Craft '+recipe.n:'Missing Ingredients')+'</button>';
+}
+
+function canCraftRecipe(recipe){
+  var ok=true;
+  recipe.ingredients.forEach(function(ing){
+    if(ing.qty===0)return; // quest item, auto-provided
+    if(invHave(ing.id)<ing.qty)ok=false;
+  });
+  return ok;
+}
+
+function invHave(id){
+  for(var i=0;i<S.inv.length;i++){if(S.inv[i].id===id)return S.inv[i].count;}
+  // check crafted items too
+  return S.craftedItems[id]||0;
+}
+
+function getLootName(id){
+  for(var i=0;i<LOOT.length;i++)if(LOOT[i].id===id)return LOOT[i].n;
+  if(CRAFT_RESULTS[id])return CRAFT_RESULTS[id].n;
+  var fd=fF(id);return fd?fd.n:id;
+}
+
+function craftItem(id){
+  var recipe=RECIPES.find(function(r){return r.id===id;});
+  if(!recipe){log('Recipe not found!','lhi');return;}
+  if(!canCraftRecipe(recipe)){log('Missing ingredients!','lhi');renderCraftDetail(id);return;}
+
+  // consume ingredients from inventory
+  recipe.ingredients.forEach(function(ing){
+    if(ing.qty===0)return;
+    removeFromInv(ing.id,ing.qty);
+  });
+
+  var res=recipe.result;
+  var resInfo=CRAFT_RESULTS[res.id]||{n:res.id,e:'?',gp:res.gp||0};
+
+  // apply effect
+  if(res.rodLootBonus){
+    var expires=Date.now()+(res.duration||300)*1000;
+    S.activeBoosts.push({type:'loot',val:res.rodLootBonus,expires:expires,name:recipe.n,fishBonus:res.rareFishBonus||0});
+    S.rodLootMod+=res.rodLootBonus;
+    log('Activated: '+recipe.n+' (+'+res.rodLootBonus+'% loot)','lhi');
+  }else if(res.questItem||res.gp===0){
+    // quest item — goes into craftedItems
+    S.craftedItems[res.id]=(S.craftedItems[res.id]||0)+1;
+    // also add to inventory for visibility
+    if(invCount()<28)addInv(res.id,1);
+    log('Crafted: '+resInfo.e+' '+resInfo.n,'lq');
+    updateQuestCraft(res.id);
+  }else{
+    // sellable item — add to inventory
+    if(invCount()<28){addInv(res.id,1);}
+    else{S.gold+=res.gp;log('Inventory full — sold '+resInfo.n+' for '+res.gp+' gp','lsl');}
+    log('Crafted: '+resInfo.e+' '+resInfo.n+(res.gp?' ('+res.gp+' gp)':''),'lct');
+  }
+
+  notify('Crafted: '+resInfo.n,'Workbench','nship');
+  S.craftedItems[res.id]=(S.craftedItems[res.id]||0)+(res.rodLootBonus?0:1);
+  updateUI();buildCraftingUI();renderInv();
+}
+
+function removeFromInv(id,qty){
+  for(var i=0;i<S.inv.length;i++){
+    if(S.inv[i].id===id){
+      S.inv[i].count-=qty;
+      if(S.inv[i].count<=0)S.inv.splice(i,1);
+      return;
+    }
+  }
+  // fall back to craftedItems
+  if(S.craftedItems[id]){S.craftedItems[id]-=qty;if(S.craftedItems[id]<=0)delete S.craftedItems[id];}
+}
+
+function buildBoostsPanel(){
+  var el=document.getElementById('boosts-panel');if(!el)return;
+  // expire old boosts
+  var now=Date.now();
+  S.activeBoosts=S.activeBoosts.filter(function(b){
+    if(b.expires<=now){
+      S.rodLootMod=Math.max(0,S.rodLootMod-b.val);
+      return false;
+    }
+    return true;
+  });
+  el.innerHTML='';
+  if(!S.activeBoosts.length){
+    el.innerHTML='<div style="font-size:10px;color:var(--text-dim)">No active boosts.</div>';
+    return;
+  }
+  S.activeBoosts.forEach(function(b){
+    var remaining=Math.ceil((b.expires-Date.now())/1000);
+    var mins=Math.floor(remaining/60),secs=remaining%60;
+    var card=document.createElement('div');card.className='boost-card';
+    card.innerHTML='<div class="boost-name">+'+b.val+'% loot chance</div><div class="boost-time">'+b.name+' &mdash; '+(mins?mins+'m ':'')+secs+'s left</div>';
+    el.appendChild(card);
+  });
+}
+
+function buildCraftedLog(){
+  var el=document.getElementById('crafted-log');if(!el)return;
+  el.innerHTML='';
+  var any=false;
+  Object.keys(S.craftedItems).forEach(function(id){
+    if(!S.craftedItems[id])return;
+    var info=CRAFT_RESULTS[id];if(!info)return;
+    var row=document.createElement('div');row.className='crafted-entry';
+    row.innerHTML='<span class="ce-ico">'+info.e+'</span><span class="ce-name">'+info.n+'</span><span class="ce-count">x'+S.craftedItems[id]+'</span>';
+    el.appendChild(row);any=true;
+  });
+  if(!any)el.innerHTML='<div style="font-size:10px;color:var(--text-dim)">Nothing crafted yet.</div>';
+}
+
+// ══════════════════════════════════════════
+// START
+// ══════════════════════════════════════════
+window.addEventListener('load',init);
+</script>
+</body>
+</html>
