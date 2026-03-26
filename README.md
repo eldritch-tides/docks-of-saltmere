@@ -2,7 +2,8 @@
 
 > *A browser-based fishing RPG with quests, a port system, crafting, and a mermaid.*
 
-![Deep Sea Fishing Banner](banner.png)
+<img width="1440" height="530" alt="image" src="https://github.com/user-attachments/assets/4b7872cd-41ec-4754-b7eb-94508923e720" />
+
 
 ---
 
@@ -19,7 +20,8 @@ No server. No install. No dependencies. Just open the `.html` file in any browse
 ### 🎣 Fishing (Levels 1–99)
 - Full RS3-accurate XP table from crayfish to sailfish
 - 9 fishing spots unlocked progressively by level — Shallows, Pier End, Coral Reef, Open Water, Deep Waters, DSF Platform, Blue Zone, Frenzy Spot, and Sailfish Run
-- Fishing Frenzy mechanic with a streak bonus up to +20% XP that decays if you go idle
+- Fishing Fren![Uploading image.png…]()
+zy mechanic with a streak bonus up to +20% XP that decays if you go idle
 - 8% base loot drop chance per catch — pull up pearls, sea runes, pirate maps, and the occasional Drowned Crown
 - Rod upgrades at the Sea Trader that reduce catch time, boost XP, or increase loot chance
 - Full outfit system for XP bonuses
